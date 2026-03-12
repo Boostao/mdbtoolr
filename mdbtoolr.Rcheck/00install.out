@@ -1,0 +1,449 @@
+* installing *source* package ‘mdbtoolr’ ...
+** this is package ‘mdbtoolr’ version ‘0.0.0.9000’
+** using staged installation
+[mdbtoolr] Building bundled mdbtools
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for a thread-safe mkdir -p... /usr/bin/mkdir -p
+checking for gawk... gawk
+checking whether make sets $(MAKE)... yes
+checking whether make supports nested variables... yes
+checking whether to enable maintainer-specific portions of Makefiles... no
+checking whether make supports nested variables... (cached) yes
+checking for style of include used by make... GNU
+checking for gcc... gcc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether we are using the GNU C compiler... yes
+checking whether gcc accepts -g... yes
+checking for gcc option to accept ISO C89... none needed
+checking whether gcc understands -c and -o together... yes
+checking dependency style of gcc... gcc3
+checking how to run the C preprocessor... gcc -E
+checking for grep that handles long lines and -e... /usr/bin/grep
+checking for egrep... /usr/bin/grep -E
+checking for ANSI C header files... yes
+checking for sys/types.h... yes
+checking for sys/stat.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for memory.h... yes
+checking for strings.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for unistd.h... yes
+checking minix/config.h usability... no
+checking minix/config.h presence... no
+checking for minix/config.h... no
+checking whether it is safe to define __EXTENSIONS__... yes
+checking whether we are using the GNU C compiler... (cached) yes
+checking whether gcc accepts -g... (cached) yes
+checking for gcc option to accept ISO C89... (cached) none needed
+checking whether gcc understands -c and -o together... (cached) yes
+checking dependency style of gcc... (cached) gcc3
+checking whether we are using the GNU C++ compiler... yes
+checking whether g++ -std=gnu++17 accepts -g... yes
+checking dependency style of g++ -std=gnu++17... gcc3
+checking for thread local storage (TLS) class... thread_local
+checking whether make sets $(MAKE)... (cached) yes
+checking build system type... x86_64-pc-linux-gnu
+checking host system type... x86_64-pc-linux-gnu
+checking how to print strings... printf
+checking for a sed that does not truncate output... /usr/bin/sed
+checking for fgrep... /usr/bin/grep -F
+checking for ld used by gcc... /usr/bin/ld
+checking if the linker (/usr/bin/ld) is GNU ld... yes
+checking for BSD- or MS-compatible name lister (nm)... /usr/bin/nm -B
+checking the name lister (/usr/bin/nm -B) interface... BSD nm
+checking whether ln -s works... yes
+checking the maximum length of command line arguments... 1572864
+checking how to convert x86_64-pc-linux-gnu file names to x86_64-pc-linux-gnu format... func_convert_file_noop
+checking how to convert x86_64-pc-linux-gnu file names to toolchain format... func_convert_file_noop
+checking for /usr/bin/ld option to reload object files... -r
+checking for objdump... objdump
+checking how to recognize dependent libraries... pass_all
+checking for dlltool... no
+checking how to associate runtime and link libraries... printf %s\n
+checking for ar... ar
+checking for archiver @FILE support... @
+checking for strip... strip
+checking for ranlib... ranlib
+checking command to parse /usr/bin/nm -B output from gcc object... ok
+checking for sysroot... no
+checking for a working dd... /usr/bin/dd
+checking how to truncate binary pipes... /usr/bin/dd bs=4096 count=1
+checking for mt... no
+checking if : is a manifest tool... no
+checking for dlfcn.h... yes
+checking for objdir... .libs
+checking if gcc supports -fno-rtti -fno-exceptions... no
+checking for gcc option to produce PIC... -fPIC -DPIC
+checking if gcc PIC flag -fPIC -DPIC works... yes
+checking if gcc static flag -static works... no
+checking if gcc supports -c -o file.o... yes
+checking if gcc supports -c -o file.o... (cached) yes
+checking whether the gcc linker (/usr/bin/ld -m elf_x86_64) supports shared libraries... yes
+checking dynamic linker characteristics... GNU/Linux ld.so
+checking how to hardcode library paths into programs... immediate
+checking whether stripping libraries is possible... yes
+checking if libtool supports shared libraries... yes
+checking whether to build shared libraries... no
+checking whether to build static libraries... yes
+checking how to run the C++ preprocessor... g++ -std=gnu++17 -E
+checking for ld used by g++ -std=gnu++17... /usr/bin/ld -m elf_x86_64
+checking if the linker (/usr/bin/ld -m elf_x86_64) is GNU ld... yes
+checking whether the g++ -std=gnu++17 linker (/usr/bin/ld -m elf_x86_64) supports shared libraries... yes
+checking for g++ -std=gnu++17 option to produce PIC... -fPIC -DPIC
+checking if g++ -std=gnu++17 PIC flag -fPIC -DPIC works... yes
+checking if g++ -std=gnu++17 static flag -static works... no
+checking if g++ -std=gnu++17 supports -c -o file.o... yes
+checking if g++ -std=gnu++17 supports -c -o file.o... (cached) yes
+checking whether the g++ -std=gnu++17 linker (/usr/bin/ld -m elf_x86_64) supports shared libraries... yes
+checking dynamic linker characteristics... (cached) GNU/Linux ld.so
+checking how to hardcode library paths into programs... immediate
+checking for flex... flex
+checking lex output file root... lex.yy
+checking lex library... none needed
+checking whether yytext is a pointer... no
+checking for bison... no
+checking for byacc... no
+checking fcntl.h usability... yes
+checking fcntl.h presence... yes
+checking for fcntl.h... yes
+checking limits.h usability... yes
+checking limits.h presence... yes
+checking for limits.h... yes
+checking for unistd.h... (cached) yes
+checking xlocale.h usability... no
+checking xlocale.h presence... no
+checking for xlocale.h... no
+checking for DBLCMapStringW in -lmswstr... no
+checking whether program_invocation_short_name is declared... yes
+checking for a readline compatible library... 
+checking for strptime... yes
+checking for fmemopen... yes
+checking for gmtime_r... yes
+checking for reallocf... no
+checking for wcstombs_l... no
+checking for mbstowcs_l... no
+checking for vasprintf... yes
+checking for vasnprintf... no
+checking whether the target supports symbol aliases... yes
+checking for special C compiler options needed for large files... no
+checking for _FILE_OFFSET_BITS value needed for large files... no
+checking Are we using flex ... yes 
+checking for ld used by gcc... /usr/bin/ld -m elf_x86_64
+checking if the linker (/usr/bin/ld -m elf_x86_64) is GNU ld... yes
+checking for shared library run path origin... done
+checking for iconv... yes
+checking for working iconv... yes
+checking whether iconv is compatible with its POSIX signature... yes
+checking whether /usr/bin/ld -m elf_x86_64 accepts --as-needed... yes
+checking pkg-config m4 macros... yes
+checking for pkg-config... /usr/bin/pkg-config
+checking pkg-config is at least version 0.9.0... yes
+checking for GLIB... yes
+checking for g_memdup2 in -lglib-2.0... yes
+checking for BASH_COMPLETION... no
+checking that generated files are newer than configure... done
+configure: creating ./config.status
+config.status: creating src/Makefile
+config.status: creating include/mdbtools.h
+config.status: creating libmdb.pc
+config.status: creating libmdbsql.pc
+config.status: creating src/util/Makefile
+config.status: creating src/util/bash-completion/Makefile
+config.status: creating src/extras/Makefile
+config.status: creating Makefile
+config.status: creating include/Makefile
+config.status: creating src/libmdb/Makefile
+config.status: creating src/sql/Makefile
+config.status: creating src/odbc/Makefile
+config.status: creating src/fuzz/Makefile
+config.status: creating doc/Makefile
+config.status: creating include/mdbver.h
+config.status: executing depfiles commands
+config.status: executing libtool commands
+configure: 
+configure: [1mMDB Tools 1.0.0 - Configuration summary(B[m
+configure: 
+configure:    SQL             : [1menabled(B[m
+configure:    ODBC            : [1mdisabled(B[m
+configure:    GLib            : [1menabled(B[m
+configure:    iconv           : [1menabled(B[m
+configure:    man pages       : [1mdisabled(B[m
+configure:    bash-completion : [1menabled(B[m
+configure: 
+Making all in src
+make[1]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+Making all in libmdb
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/libmdb'
+  CC       catalog.lo
+  CC       file.lo
+  CC       table.lo
+  CC       data.lo
+  CC       dump.lo
+  CC       backend.lo
+  CC       money.lo
+  CC       sargs.lo
+  CC       index.lo
+  CC       like.lo
+  CC       write.lo
+  CC       stats.lo
+  CC       map.lo
+  CC       props.lo
+  CC       worktable.lo
+  CC       options.lo
+  CC       iconv.lo
+  CC       version.lo
+  CC       rc4.lo
+  CCLD     libmdb.la
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/libmdb'
+Making all in extras
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/extras'
+  CC       mdb-dump.o
+  CC       mdbsupport.o
+  CCLD     mdb-hexdump
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/extras'
+Making all in sql
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+  YACC     parser.c
+make  all-am
+make[3]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+  CC       mdbsql.lo
+  YACC     parser.c
+  CC       parser.lo
+  LEX      lexer.c
+  CC       lexer.lo
+  CCLD     libmdbsql.la
+make[3]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+Making all in util
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+Making all in bash-completion
+make[3]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util/bash-completion'
+make[3]: Nothing to be done for 'all'.
+make[3]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util/bash-completion'
+make[3]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+  CC       mdb-export.o
+  CCLD     mdb-export
+  CC       mdb-array.o
+  CCLD     mdb-array
+  CC       mdb-schema.o
+  CCLD     mdb-schema
+  CC       mdb-tables.o
+  CCLD     mdb-tables
+  CC       mdb-parsecsv.o
+  CCLD     mdb-parsecsv
+  CC       mdb-header.o
+  CCLD     mdb-header
+  CC       mdb-ver.o
+  CCLD     mdb-ver
+  CC       mdb-prop.o
+  CCLD     mdb-prop
+  CC       mdb-count.o
+  CCLD     mdb-count
+  CC       mdb-queries.o
+  CCLD     mdb-queries
+  CC       mdb-json.o
+  CCLD     mdb-json
+  CC       mdb-sql.o
+  CCLD     mdb-sql
+  CC       mdb-import.o
+  CCLD     mdb-import
+  CC       prtable.o
+  CCLD     prtable
+  CC       prcat.o
+  CCLD     prcat
+  CC       prdata.o
+  CCLD     prdata
+  CC       prkkd.o
+  CCLD     prkkd
+  CC       prdump.o
+  CCLD     prdump
+  CC       prole.o
+  CCLD     prole
+  CC       updrow.o
+  CCLD     updrow
+  CC       prindex.o
+  CCLD     prindex
+make[3]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+make[2]: Nothing to be done for 'all-am'.
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+make[1]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+Making all in include
+make[1]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/include'
+make[1]: Nothing to be done for 'all'.
+make[1]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/include'
+Making all in doc
+make[1]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/doc'
+make[1]: Nothing to be done for 'all'.
+make[1]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/doc'
+make[1]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060'
+make[1]: Nothing to be done for 'all-am'.
+make[1]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060'
+Making install in src
+make[1]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+Making install in libmdb
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/libmdb'
+make[3]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/libmdb'
+ /usr/bin/mkdir -p '/tmp/mdbtoolr-mdbtools-prefix-312060/lib'
+ /bin/sh ../../libtool   --mode=install /usr/bin/install -c   libmdb.la '/tmp/mdbtoolr-mdbtools-prefix-312060/lib'
+libtool: install: /usr/bin/install -c .libs/libmdb.lai /tmp/mdbtoolr-mdbtools-prefix-312060/lib/libmdb.la
+libtool: install: /usr/bin/install -c .libs/libmdb.a /tmp/mdbtoolr-mdbtools-prefix-312060/lib/libmdb.a
+libtool: install: chmod 644 /tmp/mdbtoolr-mdbtools-prefix-312060/lib/libmdb.a
+libtool: install: ranlib /tmp/mdbtoolr-mdbtools-prefix-312060/lib/libmdb.a
+libtool: finish: PATH="/tmp/mdbtoolr-mdbtools-shims-312060:/home/bruno/.npm-global/bin:/home/bruno/.config/Code/User/globalStorage/github.copilot-chat/debugCommand:/home/bruno/.config/Code/User/globalStorage/github.copilot-chat/copilotCli:/home/bruno/.npm-global/bin:/home/bruno/.npm-global/bin:/home/bruno/.cargo/bin:/home/bruno/.local/bin:/home/bruno/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin" ldconfig -n /tmp/mdbtoolr-mdbtools-prefix-312060/lib
+----------------------------------------------------------------------
+Libraries have been installed in:
+   /tmp/mdbtoolr-mdbtools-prefix-312060/lib
+
+If you ever happen to want to link against installed libraries
+in a given directory, LIBDIR, you must either use libtool, and
+specify the full pathname of the library, or use the '-LLIBDIR'
+flag during linking and do at least one of the following:
+   - add LIBDIR to the 'LD_LIBRARY_PATH' environment variable
+     during execution
+   - add LIBDIR to the 'LD_RUN_PATH' environment variable
+     during linking
+   - use the '-Wl,-rpath -Wl,LIBDIR' linker flag
+   - have your system administrator add LIBDIR to '/etc/ld.so.conf'
+
+See any operating system documentation about shared libraries for
+more information, such as the ld(1) and ld.so(8) manual pages.
+----------------------------------------------------------------------
+make[3]: Nothing to be done for 'install-data-am'.
+make[3]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/libmdb'
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/libmdb'
+Making install in extras
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/extras'
+make[3]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/extras'
+ /usr/bin/mkdir -p '/tmp/mdbtoolr-mdbtools-prefix-312060/bin'
+  /bin/sh ../../libtool   --mode=install /usr/bin/install -c mdb-hexdump '/tmp/mdbtoolr-mdbtools-prefix-312060/bin'
+libtool: install: /usr/bin/install -c mdb-hexdump /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-hexdump
+make[3]: Nothing to be done for 'install-data-am'.
+make[3]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/extras'
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/extras'
+Making install in sql
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+  YACC     parser.c
+make  install-am
+make[3]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+  YACC     parser.c
+  LEX      lexer.c
+make[4]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+  YACC     parser.c
+  LEX      lexer.c
+ /usr/bin/mkdir -p '/tmp/mdbtoolr-mdbtools-prefix-312060/lib'
+ /bin/sh ../../libtool   --mode=install /usr/bin/install -c   libmdbsql.la '/tmp/mdbtoolr-mdbtools-prefix-312060/lib'
+libtool: install: /usr/bin/install -c .libs/libmdbsql.lai /tmp/mdbtoolr-mdbtools-prefix-312060/lib/libmdbsql.la
+libtool: install: /usr/bin/install -c .libs/libmdbsql.a /tmp/mdbtoolr-mdbtools-prefix-312060/lib/libmdbsql.a
+libtool: install: chmod 644 /tmp/mdbtoolr-mdbtools-prefix-312060/lib/libmdbsql.a
+libtool: install: ranlib /tmp/mdbtoolr-mdbtools-prefix-312060/lib/libmdbsql.a
+libtool: finish: PATH="/tmp/mdbtoolr-mdbtools-shims-312060:/home/bruno/.npm-global/bin:/home/bruno/.config/Code/User/globalStorage/github.copilot-chat/debugCommand:/home/bruno/.config/Code/User/globalStorage/github.copilot-chat/copilotCli:/home/bruno/.npm-global/bin:/home/bruno/.npm-global/bin:/home/bruno/.cargo/bin:/home/bruno/.local/bin:/home/bruno/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin" ldconfig -n /tmp/mdbtoolr-mdbtools-prefix-312060/lib
+----------------------------------------------------------------------
+Libraries have been installed in:
+   /tmp/mdbtoolr-mdbtools-prefix-312060/lib
+
+If you ever happen to want to link against installed libraries
+in a given directory, LIBDIR, you must either use libtool, and
+specify the full pathname of the library, or use the '-LLIBDIR'
+flag during linking and do at least one of the following:
+   - add LIBDIR to the 'LD_LIBRARY_PATH' environment variable
+     during execution
+   - add LIBDIR to the 'LD_RUN_PATH' environment variable
+     during linking
+   - use the '-Wl,-rpath -Wl,LIBDIR' linker flag
+   - have your system administrator add LIBDIR to '/etc/ld.so.conf'
+
+See any operating system documentation about shared libraries for
+more information, such as the ld(1) and ld.so(8) manual pages.
+----------------------------------------------------------------------
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+make[3]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/sql'
+Making install in util
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+Making install in bash-completion
+make[3]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util/bash-completion'
+make[4]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util/bash-completion'
+make[4]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/tmp/mdbtoolr-mdbtools-prefix-312060/share/bash-completion/completions'
+ /usr/bin/install -c -m 644 mdb-count mdb-export mdb-hexdump mdb-import mdb-json mdb-parsecsv mdb-prop mdb-queries mdb-schema mdb-sql mdb-tables mdb-ver '/tmp/mdbtoolr-mdbtools-prefix-312060/share/bash-completion/completions'
+make[4]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util/bash-completion'
+make[3]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util/bash-completion'
+make[3]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+make[4]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+ /usr/bin/mkdir -p '/tmp/mdbtoolr-mdbtools-prefix-312060/bin'
+  /bin/sh ../../libtool   --mode=install /usr/bin/install -c mdb-export mdb-array mdb-schema mdb-tables mdb-parsecsv mdb-header mdb-ver mdb-prop mdb-count mdb-queries mdb-json mdb-sql '/tmp/mdbtoolr-mdbtools-prefix-312060/bin'
+libtool: install: /usr/bin/install -c mdb-export /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-export
+libtool: install: /usr/bin/install -c mdb-array /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-array
+libtool: install: /usr/bin/install -c mdb-schema /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-schema
+libtool: install: /usr/bin/install -c mdb-tables /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-tables
+libtool: install: /usr/bin/install -c mdb-parsecsv /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-parsecsv
+libtool: install: /usr/bin/install -c mdb-header /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-header
+libtool: install: /usr/bin/install -c mdb-ver /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-ver
+libtool: install: /usr/bin/install -c mdb-prop /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-prop
+libtool: install: /usr/bin/install -c mdb-count /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-count
+libtool: install: /usr/bin/install -c mdb-queries /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-queries
+libtool: install: /usr/bin/install -c mdb-json /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-json
+libtool: install: /usr/bin/install -c mdb-sql /tmp/mdbtoolr-mdbtools-prefix-312060/bin/mdb-sql
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+make[3]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src/util'
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+make[3]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+make[3]: Nothing to be done for 'install-exec-am'.
+make[3]: Nothing to be done for 'install-data-am'.
+make[3]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+make[1]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/src'
+Making install in include
+make[1]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/include'
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/include'
+make[2]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/tmp/mdbtoolr-mdbtools-prefix-312060/include'
+ /usr/bin/install -c -m 644 mdbtools.h mdbsql.h '/tmp/mdbtoolr-mdbtools-prefix-312060/include'
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/include'
+make[1]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/include'
+Making install in doc
+make[1]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/doc'
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060/doc'
+make[2]: Nothing to be done for 'install-exec-am'.
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/doc'
+make[1]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060/doc'
+make[1]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060'
+make[2]: Entering directory '/tmp/mdbtoolr-mdbtools-build-312060'
+make[2]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/tmp/mdbtoolr-mdbtools-prefix-312060/lib/pkgconfig'
+ /usr/bin/install -c -m 644 libmdb.pc libmdbsql.pc '/tmp/mdbtoolr-mdbtools-prefix-312060/lib/pkgconfig'
+make[2]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060'
+make[1]: Leaving directory '/tmp/mdbtoolr-mdbtools-build-312060'
+[mdbtoolr] Bundled mdbtools installed to /home/bruno/Work/Active project/mdbtoolr/mdbtoolr.Rcheck/00_pkg_src/mdbtoolr/inst/mdbtools/bin
+** libs
+using C compiler: ‘gcc (GCC) 15.2.1 20260123 (Red Hat 15.2.1-7)’
+gcc -I"/usr/include/R" -DNDEBUG   -I/usr/local/include    -fpic  -O2 -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1  -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer    -c init.c -o init.o
+gcc -shared -L/usr/lib64/R/lib -Wl,-z,relro -Wl,--as-needed -Wl,-z,pack-relative-relocs -Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-hardened-ld-errors -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -Wl,--build-id=sha1 -o mdbtoolr.so init.o -L/usr/lib64/R/lib -lR
+installing to /home/bruno/Work/Active project/mdbtoolr/mdbtoolr.Rcheck/00LOCK-mdbtoolr/00new/mdbtoolr/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+  converting help for package ‘mdbtoolr’
+    finding HTML links ... done
+    Mdb                                     html  
+    mdbtoolr-package                        html  
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (mdbtoolr)

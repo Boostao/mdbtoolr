@@ -1,0 +1,5 @@
+^mdbtoolr\.Rcheck$
+^mdbtoolr_[0-9.]+\.tar\.gz$
+^src/\.mdbtools-build$
+^src/\.mdbtools-shims$
+^src/mdbtools-1\.0\.0\.tar\.gz$

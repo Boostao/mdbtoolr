@@ -1,0 +1,6 @@
+import(DBI)
+import(methods)
+useDynLib(mdbtoolr, .registration = TRUE)
+
+export(Mdb)
+export(mdb)
