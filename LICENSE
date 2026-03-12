@@ -1,0 +1,15 @@
+mdbtoolr licensing
+==================
+
+This package bundles source code from the upstream mdbtools project under
+`src/mdbtools/`.
+
+Upstream license files included in this package:
+- `src/mdbtools/COPYING`: GNU General Public License, version 2 (GPL-2)
+- `src/mdbtools/COPYING.LIB`: GNU Library General Public License, version 2
+  (LGPL-2)
+
+The mdbtoolr package metadata therefore declares:
+- `License: GPL-2 | LGPL-2`
+
+The complete license texts are provided in the upstream files listed above.
