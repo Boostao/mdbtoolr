@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+# Keep source tree clean from generated install/build artifacts.
+rm -rf ./inst/mdbtools/bin
+rm -rf ./src/.mdbtools-build ./src/.mdbtools-shims
+rm -f ./src/*.o ./src/*.so ./src/*.dll ./src/*.dylib ./src/*.a
+rm -f ./src/*.obj ./src/*.lib ./src/*.def ./src/*.exp ./src/symbols.rds
+
+exit 0

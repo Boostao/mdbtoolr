@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+# Reuse the POSIX configure logic in Rtools/MSYS environments.
+if [ ! -f "./configure" ]; then
+  echo "[mdbtoolr] ERROR: configure script not found" >&2
+  exit 1
+fi
+
+exec sh ./configure "$@"

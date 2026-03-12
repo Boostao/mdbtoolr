@@ -41,6 +41,12 @@ if [ "${1:-}" = "--version" ] || [ "${1:-}" = "-V" ]; then
   exit 0
 fi
 
+# Prefer vendored generated lexer output when available.
+if [ -f "lexer.c" ]; then
+  cp "lexer.c" "lex.yy.c"
+  exit 0
+fi
+
 cat > lex.yy.c <<'C_EOF'
 int yylex(void) { return 0; }
 int yywrap(void) { return 1; }
@@ -58,15 +64,30 @@ if [ "${1:-}" = "-V" ] || [ "${1:-}" = "--version" ]; then
   exit 0
 fi
 
-cat > y.tab.c <<'C_EOF'
+# Prefer vendored generated parser outputs when available.
+if [ -f "parser.c" ]; then
+  cp "parser.c" "y.tab.c"
+fi
+if [ -f "parser.h" ]; then
+  cp "parser.h" "y.tab.h"
+fi
+
+if [ ! -f "y.tab.c" ]; then
+  cat > y.tab.c <<'C_EOF'
 int yyparse(void) { return 0; }
+int parse_sql(void *mdb, const char *sql) { return 1; }
 C_EOF
-cat > y.tab.h <<'H_EOF'
+fi
+
+if [ ! -f "y.tab.h" ]; then
+  cat > y.tab.h <<'H_EOF'
 #ifndef YY_TAB_H
 #define YY_TAB_H
 int yyparse(void);
+int parse_sql(void *mdb, const char *sql);
 #endif
 H_EOF
+fi
 exit 0
 EOF
   chmod +x "$SHIM_DIR/yacc"
@@ -86,6 +107,7 @@ fi
 ./configure \
   --prefix="$PREFIX_DIR" \
   --disable-man \
+  --disable-iconv \
   --disable-maintainer-mode \
   --disable-shared \
   --enable-static

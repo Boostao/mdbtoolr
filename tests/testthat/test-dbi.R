@@ -1,3 +1,7 @@
+library(mdbtoolr)
+
+sample_accdb <- testthat::test_path("accdb", "VPro64.accdb")
+
 test_that("driver constructor returns DBIDriver", {
   drv <- Mdb()
   expect_s4_class(drv, "MdbDriver")
@@ -12,19 +16,19 @@ test_that("bundled mdbtools binaries are present", {
 })
 
 test_that("character dbConnect dispatch works for accdb path", {
-  skip_if_not(file.exists("VPro64.accdb"))
+  skip_if_not(file.exists(sample_accdb))
 
-  conn <- DBI::dbConnect("VPro64.accdb")
+  conn <- DBI::dbConnect(sample_accdb)
   on.exit(DBI::dbDisconnect(conn), add = TRUE)
 
   expect_true(DBI::dbIsValid(conn))
 })
 
 test_that("basic DBI methods operate on sample accdb", {
-  skip_if_not(file.exists("VPro64.accdb"))
+  skip_if_not(file.exists(sample_accdb))
   skip_if_not(nzchar(Sys.which("mdb-tables")))
 
-  conn <- DBI::dbConnect(Mdb(), dbname = "VPro64.accdb")
+  conn <- DBI::dbConnect(Mdb(), dbname = sample_accdb)
   on.exit(DBI::dbDisconnect(conn), add = TRUE)
 
   tables <- DBI::dbListTables(conn)
@@ -41,10 +45,10 @@ test_that("basic DBI methods operate on sample accdb", {
 })
 
 test_that("query roundtrip works", {
-  skip_if_not(file.exists("VPro64.accdb"))
+  skip_if_not(file.exists(sample_accdb))
   skip_if_not(nzchar(Sys.which("mdb-sql")))
 
-  conn <- DBI::dbConnect("VPro64.accdb")
+  conn <- DBI::dbConnect(sample_accdb)
   on.exit(DBI::dbDisconnect(conn), add = TRUE)
 
   out <- DBI::dbGetQuery(conn, "select * from LayerCode limit 2;")

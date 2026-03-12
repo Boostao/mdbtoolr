@@ -1,2 +1,0 @@
-# Build only the package registration stub. Bundled mdbtools is compiled in configure.
-OBJECTS = init.o

@@ -1,0 +1,41 @@
+# R build/check artifacts
+*.tar.gz
+*.Rcheck/
+.Rhistory
+.RData
+.Ruserdata
+
+# Package install/build outputs
+src/*.o
+src/*.so
+src/*.dll
+src/*.dylib
+src/*.a
+src/*.obj
+src/*.lib
+src/*.def
+src/*.exp
+src/symbols.rds
+
+# Bundled mdbtools binaries generated at install time
+inst/mdbtools/bin/
+
+# Temporary/local build helpers
+src/.mdbtools-build/
+src/.mdbtools-shims/
+
+# Vendored mdbtools accidental local regeneration outputs
+src/mdbtools/autom4te.cache/
+src/mdbtools/config.log
+src/mdbtools/config.status
+src/mdbtools/libtool
+src/mdbtools/stamp-h1
+src/mdbtools/include/mdbver.h
+src/mdbtools/src/sql/parser.c
+src/mdbtools/src/sql/parser.h
+src/mdbtools/src/sql/lexer.c
+src/mdbtools/src/sql/position.c
+
+# Editor/OS noise
+.vscode/
+.DS_Store

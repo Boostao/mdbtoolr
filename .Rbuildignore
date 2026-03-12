@@ -2,4 +2,15 @@
 ^mdbtoolr_[0-9.]+\.tar\.gz$
 ^src/\.mdbtools-build$
 ^src/\.mdbtools-shims$
-^src/mdbtools-1\.0\.0\.tar\.gz$
+^src/mdbtools-.*\.tar\.gz$
+^inst/mdbtools/bin$
+^inst/mdbtools/bin/.*$
+^src/mdbtools/autom4te\.cache$
+^src/mdbtools/config\.log$
+^src/mdbtools/config\.status$
+^src/mdbtools/libtool$
+^src/mdbtools/stamp-h1$
+^src/mdbtools/src/sql/parser\.c$
+^src/mdbtools/src/sql/parser\.h$
+^src/mdbtools/src/sql/lexer\.c$
+^src/mdbtools/src/sql/position\.c$
