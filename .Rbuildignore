@@ -1,3 +1,4 @@
+^scripts
 ^mdbtoolr\.Rcheck$
 ^mdbtoolr_[0-9.]+\.tar\.gz$
 ^src/\.mdbtools-build$
@@ -10,7 +11,3 @@
 ^src/mdbtools/config\.status$
 ^src/mdbtools/libtool$
 ^src/mdbtools/stamp-h1$
-^src/mdbtools/src/sql/parser\.c$
-^src/mdbtools/src/sql/parser\.h$
-^src/mdbtools/src/sql/lexer\.c$
-^src/mdbtools/src/sql/position\.c$

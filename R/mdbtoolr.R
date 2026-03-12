@@ -94,10 +94,20 @@ methods::setClass(
 }
 
 .run_sql <- function(path, statement) {
+  sql <- as.character(statement[[1]])
+  sql_trim <- trimws(sql)
+  if (!nzchar(sql_trim)) {
+    stop("`statement` must not be empty.", call. = FALSE)
+  }
+
+  if (!grepl(";\\s*$", sql_trim)) {
+    sql_trim <- paste0(sql_trim, ";")
+  }
+
   out <- .run_cmd(
     "mdb-sql",
     args = c("-d", "\t", "-P", "-F", path),
-    input = statement
+    input = sql_trim
   )
 
   if (length(out) == 0L) {

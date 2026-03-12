@@ -55,3 +55,15 @@ test_that("query roundtrip works", {
   expect_s3_class(out, "data.frame")
   expect_lte(nrow(out), 2)
 })
+
+test_that("query without semicolon returns rows", {
+  skip_if_not(file.exists(sample_accdb))
+
+  conn <- DBI::dbConnect(sample_accdb)
+  on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+  out <- DBI::dbGetQuery(conn, "SELECT * FROM Sample_Humus")
+  expect_s3_class(out, "data.frame")
+  expect_gt(nrow(out), 0)
+  expect_true("PlotNumber" %in% names(out))
+})
