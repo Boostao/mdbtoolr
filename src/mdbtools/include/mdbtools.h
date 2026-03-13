@@ -19,7 +19,7 @@
 #define _mdbtools_h_
 
 #define MDBTOOLS_H_HAVE_ICONV_H 1
-#define MDBTOOLS_H_HAVE_XLOCALE_H 1
+#define MDBTOOLS_H_HAVE_XLOCALE_H 0
 
 #ifdef __cplusplus
   extern "C" {
@@ -38,6 +38,19 @@
 
 #if MDBTOOLS_H_HAVE_ICONV_H
 #include <iconv.h>
+#endif
+
+/*
+ * Keep mdbtools feature flags consistent across build paths.
+ * The direct R Makevars path does not run autotools config headers,
+ * but iconv.c gates behavior on HAVE_ICONV.
+ */
+#if MDBTOOLS_H_HAVE_ICONV_H && !defined(HAVE_ICONV)
+#define HAVE_ICONV 1
+#endif
+
+#if defined(HAVE_ICONV) && !defined(ICONV_CONST)
+#define ICONV_CONST
 #endif
 
 #if MDBTOOLS_H_HAVE_XLOCALE_H
@@ -66,6 +79,10 @@
 // This attribute is not supported by all compilers:
 // M$VC see http://stackoverflow.com/questions/1113409/attribute-constructor-equivalent-in-vc
 #define MDB_DEPRECATED(type, funcname) type __attribute__((deprecated)) funcname
+
+#ifndef TLS
+#define TLS
+#endif
 
 typedef locale_t mdb_locale_t;
 

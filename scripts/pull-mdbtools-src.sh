@@ -8,6 +8,8 @@ SRC_DIR="$ROOT_DIR/src"
 TARGET_DIR="$SRC_DIR/mdbtools"
 URL_RELEASE="https://github.com/mdbtools/mdbtools/releases/download/v${VERSION}/mdbtools-${VERSION}.tar.gz"
 URL_GH_ARCHIVE="https://github.com/mdbtools/mdbtools/archive/refs/tags/v${VERSION}.tar.gz"
+TESTDATA_URL="https://github.com/mdbtools/mdbtestdata/archive/refs/heads/master.tar.gz"
+TESTDATA_DIR="$ROOT_DIR/tests/testthat/mdbtestdata"
 
 mkdir -p "$SRC_DIR"
 
@@ -56,9 +58,101 @@ prune_non_build_files() {
   rm -f "$TARGET_DIR/m4/lt~obsolete.m4"
 }
 
+apply_local_vendor_patches() {
+  header="$TARGET_DIR/include/mdbtools.h"
+  if [ ! -f "$header" ]; then
+    return 0
+  fi
+
+  detect_header() {
+    include_name="$1"
+    compiler_bin="${CC:-cc}"
+    probe_file="${TMPDIR:-/tmp}/mdbtoolr-include-probe-$$.c"
+
+    # Skip probing when no compiler is available; default to disabled in that case.
+    if ! command -v "$compiler_bin" >/dev/null 2>&1; then
+      return 1
+    fi
+
+    cat > "$probe_file" <<EOF
+#include <${include_name}>
+int main(void) { return 0; }
+EOF
+
+    if "$compiler_bin" -c "$probe_file" -o /dev/null >/dev/null 2>&1; then
+      rm -f "$probe_file"
+      return 0
+    fi
+
+    rm -f "$probe_file"
+    return 1
+  }
+
+  if detect_header "iconv.h"; then
+    iconv_value=1
+  else
+    iconv_value=0
+  fi
+
+  if detect_header "xlocale.h"; then
+    xlocale_value=1
+  else
+    xlocale_value=0
+  fi
+
+  sed -i "s/^#define MDBTOOLS_H_HAVE_ICONV_H .*/#define MDBTOOLS_H_HAVE_ICONV_H ${iconv_value}/" "$header"
+  sed -i "s/^#define MDBTOOLS_H_HAVE_XLOCALE_H .*/#define MDBTOOLS_H_HAVE_XLOCALE_H ${xlocale_value}/" "$header"
+
+  if ! grep -q '^#if MDBTOOLS_H_HAVE_ICONV_H && !defined(HAVE_ICONV)$' "$header"; then
+    awk '
+      /^#if MDBTOOLS_H_HAVE_ICONV_H$/ {
+        print;
+        in_iconv_include=1;
+        next;
+      }
+      in_iconv_include && /^#endif$/ {
+        print;
+        print "";
+        print "/*";
+        print " * Keep mdbtools feature flags consistent across build paths.";
+        print " * The direct R Makevars path does not run autotools config headers,";
+        print " * but iconv.c gates behavior on HAVE_ICONV.";
+        print " */";
+        print "#if MDBTOOLS_H_HAVE_ICONV_H && !defined(HAVE_ICONV)";
+        print "#define HAVE_ICONV 1";
+        print "#endif";
+        print "";
+        print "#if defined(HAVE_ICONV) && !defined(ICONV_CONST)";
+        print "#define ICONV_CONST";
+        print "#endif";
+        in_iconv_include=0;
+        next;
+      }
+      { print }
+    ' "$header" > "$header.tmp"
+    mv "$header.tmp" "$header"
+  fi
+
+  if ! grep -q '^#ifndef TLS$' "$header"; then
+    awk '
+      /#define MDB_DEPRECATED\(type, funcname\) type __attribute__\(\(deprecated\)\) funcname/ {
+        print;
+        print "";
+        print "#ifndef TLS";
+        print "#define TLS";
+        print "#endif";
+        next;
+      }
+      { print }
+    ' "$header" > "$header.tmp"
+    mv "$header.tmp" "$header"
+  fi
+}
+
 tmp_tarball="$(mktemp "${TMPDIR:-/tmp}/mdbtoolr-mdbtools-${VERSION}-XXXXXX.tar.gz")"
+tmp_testdata_tarball="$(mktemp "${TMPDIR:-/tmp}/mdbtoolr-mdbtestdata-XXXXXX.tar.gz")"
 tmp_extract="$(mktemp -d "${TMPDIR:-/tmp}/mdbtoolr-src-XXXXXX")"
-trap 'rm -rf "$tmp_extract"; rm -f "$tmp_tarball"' EXIT INT TERM
+trap 'rm -rf "$tmp_extract"; rm -f "$tmp_tarball" "$tmp_testdata_tarball"' EXIT INT TERM
 
 echo "[mdbtoolr] Downloading mdbtools v${VERSION} release tarball"
 if ! fetch "$tmp_tarball" "$URL_RELEASE"; then
@@ -79,6 +173,7 @@ fi
 
 cp -R "$src_unpacked"/. "$TARGET_DIR"/
 prune_non_build_files
+apply_local_vendor_patches
 
 if [ ! -x "$TARGET_DIR/configure" ]; then
   echo "ERROR: vendored source does not include configure; expected release tarball layout" >&2
@@ -86,3 +181,23 @@ if [ ! -x "$TARGET_DIR/configure" ]; then
 fi
 
 echo "[mdbtoolr] Vendored mdbtools source refreshed in $TARGET_DIR"
+
+echo "[mdbtoolr] Downloading mdbtestdata fixtures"
+fetch "$tmp_testdata_tarball" "$TESTDATA_URL"
+
+test_extract="$tmp_extract/mdbtestdata"
+mkdir -p "$test_extract"
+tar -xzf "$tmp_testdata_tarball" -C "$test_extract"
+
+testdata_unpacked="$(find "$test_extract" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+if [ -z "$testdata_unpacked" ] || [ ! -d "$testdata_unpacked/data" ]; then
+  echo "ERROR: failed to unpack mdbtestdata" >&2
+  exit 1
+fi
+
+rm -rf "$TESTDATA_DIR"
+mkdir -p "$TESTDATA_DIR"
+cp -R "$testdata_unpacked/data" "$TESTDATA_DIR"/
+cp -R "$testdata_unpacked/sql" "$TESTDATA_DIR"/
+
+echo "[mdbtoolr] Test fixtures refreshed in $TESTDATA_DIR"

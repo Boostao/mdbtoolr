@@ -1,14 +1,12 @@
 #' Create an mdbtoolr Driver
 #'
+#' `mdb()` is the canonical DBI-style constructor.
+#'
 #' @return A DBI driver for '.mdb' and '.accdb' files.
 #' @export
-Mdb <- function() {
+mdb <- function() {
   methods::new("MdbDriver")
 }
-
-#' @rdname Mdb
-#' @export
-mdb <- Mdb
 
 methods::setClass("MdbDriver", contains = "DBIDriver")
 
@@ -49,81 +47,28 @@ methods::setClass(
   }
 }
 
-.mdbtools_bin_dir <- function() {
-  path <- system.file("mdbtools", "bin", package = "mdbtoolr")
-  if (nzchar(path) && dir.exists(path)) {
-    return(path)
-  }
-
-  ""
+.native_list_tables <- function(path) {
+  .Call("mdbtoolr_list_tables", path)
 }
 
-.resolve_mdbtools_command <- function(command) {
-  if (grepl("/", command, fixed = TRUE)) {
-    return(command)
-  }
-
-  bin_dir <- .mdbtools_bin_dir()
-  cmd_path <- if (nzchar(bin_dir)) file.path(bin_dir, command) else ""
-  if (nzchar(cmd_path) && file.exists(cmd_path)) {
-    return(cmd_path)
-  }
-
-  stop(
-    "Bundled mdbtools binary not found for command: ",
-    command,
-    ". Reinstall mdbtoolr to trigger in-package compilation.",
-    call. = FALSE
-  )
+.native_list_fields <- function(path, table) {
+  .Call("mdbtoolr_list_fields", path, table)
 }
 
-.run_cmd <- function(command, args = character(), input = NULL) {
-  executable <- .resolve_mdbtools_command(command)
-  out <- system2(
-    executable,
-    args = shQuote(args),
-    stdout = TRUE,
-    stderr = TRUE,
-    input = input
-  )
-  status <- attr(out, "status")
-  if (!is.null(status) && status != 0L) {
-    stop(sprintf("`%s` failed:\n%s", command, paste(out, collapse = "\n")), call. = FALSE)
-  }
-  out
+.native_read_table <- function(path, table) {
+  .Call("mdbtoolr_read_table", path, table)
 }
 
-.run_sql <- function(path, statement) {
-  sql <- as.character(statement[[1]])
-  sql_trim <- trimws(sql)
-  if (!nzchar(sql_trim)) {
-    stop("`statement` must not be empty.", call. = FALSE)
-  }
+.native_run_query <- function(path, statement) {
+  .Call("mdbtoolr_run_query", path, statement)
+}
 
-  if (!grepl(";\\s*$", sql_trim)) {
-    sql_trim <- paste0(sql_trim, ";")
-  }
-
-  out <- .run_cmd(
-    "mdb-sql",
-    args = c("-d", "\t", "-P", "-F", path),
-    input = sql_trim
-  )
-
-  if (length(out) == 0L) {
+.as_data_frame <- function(x) {
+  if (length(x) == 0L) {
     return(data.frame())
   }
 
-  txt <- paste(out, collapse = "\n")
-  utils::read.delim(
-    text = txt,
-    sep = "\t",
-    header = TRUE,
-    check.names = FALSE,
-    stringsAsFactors = FALSE,
-    quote = "\"",
-    comment.char = ""
-  )
+  as.data.frame(x, check.names = FALSE, stringsAsFactors = FALSE, optional = TRUE)
 }
 
 methods::setMethod(
@@ -148,8 +93,6 @@ methods::setMethod(
       stop("`dbname` must be a single '.mdb' or '.accdb' path.", call. = FALSE)
     }
 
-    .resolve_mdbtools_command("mdb-tables")
-
     path <- normalizePath(dbname, mustWork = TRUE)
     methods::new("MdbConnection", path = path, open = TRUE)
   }
@@ -160,12 +103,12 @@ methods::setMethod(
   "character",
   function(drv, ...) {
     if (.is_mdb_path(drv)) {
-      return(DBI::dbConnect(Mdb(), dbname = drv, ...))
+      return(DBI::dbConnect(mdb(), dbname = drv, ...))
     }
 
     stop(
       "When using a character first argument, provide an '.mdb' or '.accdb' path, ",
-      "or call DBI::dbConnect(Mdb(), dbname = ...).",
+      "or call DBI::dbConnect(mdb(), dbname = ...).",
       call. = FALSE
     )
   }
@@ -193,7 +136,7 @@ methods::setMethod(
   "MdbConnection",
   function(conn, ...) {
     .require_valid_connection(conn)
-    .run_cmd("mdb-tables", c("-1", conn@path))
+    .native_list_tables(conn@path)
   }
 )
 
@@ -220,13 +163,7 @@ methods::setMethod(
   function(conn, name, ...) {
     .require_valid_connection(conn)
     table_name <- .as_table_name(name)
-    out <- .run_cmd("mdb-export", c(conn@path, table_name))
-    if (length(out) == 0L) {
-      return(character())
-    }
-
-    header <- out[[1]]
-    colnames(utils::read.csv(text = header, nrows = 0L, check.names = FALSE))
+    .native_list_fields(conn@path, table_name)
   }
 )
 
@@ -244,18 +181,7 @@ methods::setMethod(
   function(conn, name, ...) {
     .require_valid_connection(conn)
     table_name <- .as_table_name(name)
-    out <- .run_cmd("mdb-export", c("-0", "__MDB_NULL__", conn@path, table_name))
-
-    if (length(out) == 0L) {
-      return(data.frame())
-    }
-
-    utils::read.csv(
-      text = paste(out, collapse = "\n"),
-      check.names = FALSE,
-      stringsAsFactors = FALSE,
-      na.strings = "__MDB_NULL__"
-    )
+    .as_data_frame(.native_read_table(conn@path, table_name))
   }
 )
 
@@ -280,7 +206,7 @@ methods::setMethod(
   c("MdbConnection", "character"),
   function(conn, statement, ...) {
     .require_valid_connection(conn)
-    data <- .run_sql(conn@path, statement)
+    data <- .as_data_frame(.native_run_query(conn@path, statement))
     methods::new(
       "MdbResult",
       data = data,
@@ -305,12 +231,7 @@ methods::setMethod(
   c("MdbConnection", "character"),
   function(conn, statement, ...) {
     .require_valid_connection(conn)
-    .run_cmd(
-      "mdb-sql",
-      args = c("-d", "\t", "-P", "-F", conn@path),
-      input = statement
-    )
-    0L
+    stop("`dbExecute()` is not supported for MDB/ACCDB in read-only mode.", call. = FALSE)
   }
 )
 

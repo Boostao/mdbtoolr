@@ -16,6 +16,10 @@ src/*.lib
 src/*.def
 src/*.exp
 src/symbols.rds
+src/mdbtools/src/libmdb/*.o
+src/mdbtools/src/libmdb/*.obj
+src/mdbtools/src/sql/*.o
+src/mdbtools/src/sql/*.obj
 
 # Bundled mdbtools binaries generated at install time
 inst/mdbtools/bin/
