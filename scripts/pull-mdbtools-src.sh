@@ -125,7 +125,11 @@ EOF
         print "#endif";
         print "";
         print "#if defined(HAVE_ICONV) && !defined(ICONV_CONST)";
+        print "#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) || defined(WINDOWS)";
         print "#define ICONV_CONST const";
+        print "#else";
+        print "#define ICONV_CONST";
+        print "#endif";
         print "#endif";
         in_iconv_include=0;
         next;

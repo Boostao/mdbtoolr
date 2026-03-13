@@ -52,7 +52,11 @@
 #endif
 
 #if defined(HAVE_ICONV) && !defined(ICONV_CONST)
+#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) || defined(WINDOWS)
 #define ICONV_CONST const
+#else
+#define ICONV_CONST
+#endif
 #endif
 
 #if MDBTOOLS_H_HAVE_XLOCALE_H
