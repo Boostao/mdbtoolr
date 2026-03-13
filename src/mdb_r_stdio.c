@@ -4,24 +4,13 @@
 #include <R_ext/Print.h>
 #include <R_ext/Error.h>
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-static FILE *const MDBTOOLR_STDOUT_SENTINEL = (FILE *) (uintptr_t) 1u;
-static FILE *const MDBTOOLR_STDERR_SENTINEL = (FILE *) (uintptr_t) 2u;
 static int mdbtoolr_r_printv(FILE *stream, const char *format, va_list ap);
 
-FILE *mdbtoolr_r_stdout(void) {
-  return MDBTOOLR_STDOUT_SENTINEL;
-}
-
-FILE *mdbtoolr_r_stderr(void) {
-  return MDBTOOLR_STDERR_SENTINEL;
-}
-
 int mdbtoolr_r_vprintf(const char *format, va_list ap) {
-  return mdbtoolr_r_printv(MDBTOOLR_STDOUT_SENTINEL, format, ap);
+  return mdbtoolr_r_printv(stdout, format, ap);
 }
 
 int mdbtoolr_r_printf(const char *format, ...) {
@@ -56,7 +45,7 @@ static int mdbtoolr_r_printv(FILE *stream, const char *format, va_list ap) {
   (void) vsnprintf(buffer, (size_t) needed + 1u, format, ap_copy);
   va_end(ap_copy);
 
-  if (stream == MDBTOOLR_STDERR_SENTINEL) {
+  if (stream == stderr) {
     REprintf("%s", buffer);
   } else {
     Rprintf("%s", buffer);
@@ -67,7 +56,7 @@ static int mdbtoolr_r_printv(FILE *stream, const char *format, va_list ap) {
 }
 
 int mdbtoolr_r_vfprintf(FILE *stream, const char *format, va_list ap) {
-  if (stream == MDBTOOLR_STDOUT_SENTINEL || stream == MDBTOOLR_STDERR_SENTINEL) {
+  if (stream == stdout || stream == stderr) {
     return mdbtoolr_r_printv(stream, format, ap);
   }
   return vfprintf(stream, format, ap);
@@ -84,11 +73,11 @@ int mdbtoolr_r_fprintf(FILE *stream, const char *format, ...) {
 }
 
 int mdbtoolr_r_fputs(const char *s, FILE *stream) {
-  if (stream == MDBTOOLR_STDOUT_SENTINEL) {
+  if (stream == stdout) {
     Rprintf("%s", s);
     return 1;
   }
-  if (stream == MDBTOOLR_STDERR_SENTINEL) {
+  if (stream == stderr) {
     REprintf("%s", s);
     return 1;
   }
@@ -105,11 +94,11 @@ int mdbtoolr_r_fputc(int c, FILE *stream) {
   ch[0] = (char) c;
   ch[1] = '\0';
 
-  if (stream == MDBTOOLR_STDOUT_SENTINEL) {
+  if (stream == stdout) {
     Rprintf("%s", ch);
     return c;
   }
-  if (stream == MDBTOOLR_STDERR_SENTINEL) {
+  if (stream == stderr) {
     REprintf("%s", ch);
     return c;
   }
@@ -125,7 +114,7 @@ int mdbtoolr_r_putchar(int c) {
 }
 
 int mdbtoolr_r_fflush(FILE *stream) {
-  if (stream == MDBTOOLR_STDOUT_SENTINEL || stream == MDBTOOLR_STDERR_SENTINEL) {
+  if (stream == stdout || stream == stderr) {
     return 0;
   }
   return fflush(stream);
