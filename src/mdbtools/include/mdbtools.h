@@ -46,11 +46,13 @@
  * but iconv.c gates behavior on HAVE_ICONV.
  */
 #if MDBTOOLS_H_HAVE_ICONV_H && !defined(HAVE_ICONV)
+#if !defined(_WIN32) && !defined(WIN32) && !defined(_WIN64) && !defined(WIN64) && !defined(WINDOWS)
 #define HAVE_ICONV 1
+#endif
 #endif
 
 #if defined(HAVE_ICONV) && !defined(ICONV_CONST)
-#define ICONV_CONST
+#define ICONV_CONST const
 #endif
 
 #if MDBTOOLS_H_HAVE_XLOCALE_H
@@ -84,7 +86,11 @@
 #define TLS
 #endif
 
+#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) || defined(WINDOWS)
+typedef _locale_t mdb_locale_t;
+#else
 typedef locale_t mdb_locale_t;
+#endif
 
 enum {
 	MDB_PAGE_DB = 0,
@@ -334,8 +340,8 @@ typedef struct {
 	struct S_MdbTableDef *relationships_table;
 	char        *relationships_values[5];
 	MdbStatistics *stats;
-    GHashTable *backends;
-#if MDBTOOLS_H_HAVE_ICONV_H
+	GHashTable *backends;
+#if defined(HAVE_ICONV)
 	iconv_t iconv_in;
 	iconv_t iconv_out;
 #else

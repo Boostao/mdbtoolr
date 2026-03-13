@@ -119,11 +119,13 @@ EOF
         print " * but iconv.c gates behavior on HAVE_ICONV.";
         print " */";
         print "#if MDBTOOLS_H_HAVE_ICONV_H && !defined(HAVE_ICONV)";
+        print "#if !defined(_WIN32) && !defined(WIN32) && !defined(_WIN64) && !defined(WIN64) && !defined(WINDOWS)";
         print "#define HAVE_ICONV 1";
+        print "#endif";
         print "#endif";
         print "";
         print "#if defined(HAVE_ICONV) && !defined(ICONV_CONST)";
-        print "#define ICONV_CONST";
+        print "#define ICONV_CONST const";
         print "#endif";
         in_iconv_include=0;
         next;
@@ -141,6 +143,39 @@ EOF
         print "#ifndef TLS";
         print "#define TLS";
         print "#endif";
+        next;
+      }
+      { print }
+    ' "$header" > "$header.tmp"
+    mv "$header.tmp" "$header"
+  fi
+
+  # MinGW exposes _locale_t instead of locale_t.
+  if grep -q '^typedef locale_t mdb_locale_t;$' "$header"; then
+    awk '
+      /^typedef locale_t mdb_locale_t;$/ {
+        print "#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) || defined(WINDOWS)";
+        print "typedef _locale_t mdb_locale_t;";
+        print "#else";
+        print "typedef locale_t mdb_locale_t;";
+        print "#endif";
+        next;
+      }
+      { print }
+    ' "$header" > "$header.tmp"
+    mv "$header.tmp" "$header"
+  fi
+
+  if grep -q '^#if MDBTOOLS_H_HAVE_ICONV_H$' "$header"; then
+    awk '
+      /^\s*GHashTable \*backends;\s*$/ {
+        print;
+        in_mdbhandle_fields=1;
+        next;
+      }
+      in_mdbhandle_fields && /^#if MDBTOOLS_H_HAVE_ICONV_H$/ {
+        print "#if defined(HAVE_ICONV)";
+        in_mdbhandle_fields=0;
         next;
       }
       { print }

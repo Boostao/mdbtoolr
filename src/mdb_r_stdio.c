@@ -2,6 +2,7 @@
 #include "mdb_r_stdio.h"
 
 #include <R_ext/Print.h>
+#include <R_ext/Error.h>
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 
 static FILE *const MDBTOOLR_STDOUT_SENTINEL = (FILE *) (uintptr_t) 1u;
 static FILE *const MDBTOOLR_STDERR_SENTINEL = (FILE *) (uintptr_t) 2u;
+static int mdbtoolr_r_printv(FILE *stream, const char *format, va_list ap);
 
 FILE *mdbtoolr_r_stdout(void) {
   return MDBTOOLR_STDOUT_SENTINEL;
@@ -16,6 +18,20 @@ FILE *mdbtoolr_r_stdout(void) {
 
 FILE *mdbtoolr_r_stderr(void) {
   return MDBTOOLR_STDERR_SENTINEL;
+}
+
+int mdbtoolr_r_vprintf(const char *format, va_list ap) {
+  return mdbtoolr_r_printv(MDBTOOLR_STDOUT_SENTINEL, format, ap);
+}
+
+int mdbtoolr_r_printf(const char *format, ...) {
+  int out;
+  va_list ap;
+
+  va_start(ap, format);
+  out = mdbtoolr_r_vprintf(format, ap);
+  va_end(ap);
+  return out;
 }
 
 static int mdbtoolr_r_printv(FILE *stream, const char *format, va_list ap) {
@@ -79,6 +95,11 @@ int mdbtoolr_r_fputs(const char *s, FILE *stream) {
   return fputs(s, stream);
 }
 
+int mdbtoolr_r_puts(const char *s) {
+  Rprintf("%s\n", s);
+  return 1;
+}
+
 int mdbtoolr_r_fputc(int c, FILE *stream) {
   char ch[2];
   ch[0] = (char) c;
@@ -95,9 +116,21 @@ int mdbtoolr_r_fputc(int c, FILE *stream) {
   return fputc(c, stream);
 }
 
+int mdbtoolr_r_putchar(int c) {
+  char ch[2];
+  ch[0] = (char) c;
+  ch[1] = '\0';
+  Rprintf("%s", ch);
+  return c;
+}
+
 int mdbtoolr_r_fflush(FILE *stream) {
   if (stream == MDBTOOLR_STDOUT_SENTINEL || stream == MDBTOOLR_STDERR_SENTINEL) {
     return 0;
   }
   return fflush(stream);
+}
+
+void mdbtoolr_r_exit(int status) {
+  Rf_error("mdbtools attempted to terminate the R process (exit status %d)", status);
 }
