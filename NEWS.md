@@ -9,3 +9,4 @@
   direct `src/Makevars` compilation and bundled `mdbtools` configure/build paths.
 - Improved cleanup/ignore rules for generated object files in vendored `mdbtools` sources.
 - Clarified DBI constructor naming: `mdb()` is the preferred constructor.
+- Add support for macOS
