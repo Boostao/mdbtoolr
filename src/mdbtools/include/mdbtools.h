@@ -51,6 +51,15 @@
 #endif
 #endif
 
+/*
+ * The R package build compiles vendored sources directly instead of using
+ * mdbtools' autotools feature detection. Expose reallocf on macOS so
+ * data.c does not compile its fallback implementation.
+ */
+#if defined(__APPLE__) && !defined(HAVE_REALLOCF)
+#define HAVE_REALLOCF 1
+#endif
+
 #if defined(HAVE_ICONV) && !defined(ICONV_CONST)
 #if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) || defined(WINDOWS)
 #define ICONV_CONST const
