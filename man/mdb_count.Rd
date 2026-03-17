@@ -23,3 +23,9 @@ Integer row count or version string.
 \code{mdb-count} is a utility program distributed with MDB Tools.
 It outputs the number of rows in a table.
 }
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  mdb_count(db, "Orders")
+}
+}

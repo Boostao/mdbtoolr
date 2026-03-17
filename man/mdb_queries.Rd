@@ -10,7 +10,8 @@ mdb_queries(
   list = TRUE,
   newline = FALSE,
   delimiter = " ",
-  as_text = FALSE
+  as_text = FALSE,
+  as_list = TRUE
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ mdb_queries(
 \item{delimiter}{Delimiter equivalent to \code{-d/--delimiter} (default single space).}
 
 \item{as_text}{Logical; when \code{TRUE}, returns delimited scalar text for listings.}
+
+\item{as_list}{Logical; defaults to \code{TRUE}. When \code{TRUE}, returns a named
+\code{mdblist} for query SQL outputs.}
 }
 \value{
 Character vector of query names, query SQL text, or delimited scalar text.
@@ -37,4 +41,13 @@ with a specific query.
 \details{
 This wrapper returns vectors by default and can collapse listings to CLI-like
 text with \code{as_text = TRUE}.
+}
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  q <- mdb_queries(db)
+  head(q)
+  q_sql <- mdb_queries(db, query = c("Orders Qry", "Product Sales for 1997"), as_list = TRUE)
+  q_sql
+}
 }

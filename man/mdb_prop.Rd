@@ -4,7 +4,13 @@
 \alias{mdb_prop}
 \title{Get Properties List From MDB Database}
 \usage{
-mdb_prop(path, name = NULL, propcol = "LvProp", version = FALSE)
+mdb_prop(
+  path,
+  name = NULL,
+  propcol = "LvProp",
+  version = FALSE,
+  as_list = TRUE
+)
 }
 \arguments{
 \item{path}{Path to \code{.mdb}/\code{.accdb} file.}
@@ -14,13 +20,25 @@ mdb_prop(path, name = NULL, propcol = "LvProp", version = FALSE)
 \item{propcol}{Property column name. Defaults to \code{LvProp}.}
 
 \item{version}{Logical; when \code{TRUE}, return mdbtools version.}
+
+\item{as_list}{Logical; defaults to \code{TRUE}. When \code{TRUE}, returns a named
+\code{mdblist} with one entry per requested object in \code{name}.}
 }
 \value{
-Character scalar containing the command output.
+\code{mdblist} by default; when \code{as_list = FALSE}, returns a character
+scalar for one object name or a plain named list for multiple names.
 }
 \description{
 \code{mdb-prop} prints a properties list from an MDB database.
 \code{name} is the name of the table, query, or other object.
 \code{propcol} is the name of the \code{MSysObjects} column containing properties and
 defaults to \code{LvProp}.
+}
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  cat(mdb_prop(db, "Orders", as_list = FALSE))
+  p <- mdb_prop(db, c("Orders", "Orders Qry"), as_list = TRUE)
+  p
+}
 }

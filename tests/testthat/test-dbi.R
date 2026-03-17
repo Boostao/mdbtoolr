@@ -127,8 +127,9 @@ test_that("mdb_queries lists saved queries and extracts SQL", {
   expect_true("Current Product List" %in% queries)
 
   sql <- mdb_queries(sample_mdb, query = "Current Product List")
-  expect_type(sql, "character")
-  expect_true(grepl("^SELECT", sql, ignore.case = TRUE))
+  expect_s3_class(sql, "mdblist")
+  expect_identical(names(sql), "Current Product List")
+  expect_true(grepl("^SELECT", sql[["Current Product List"]], ignore.case = TRUE))
 })
 
 test_that("dbListObjects returns DBI-shaped data frame with tables and queries", {
@@ -159,9 +160,120 @@ test_that("mdb_ver and mdb_schema work without system CLI", {
   file_ver <- mdb_ver(sample_mdb)
   expect_identical(file_ver, "JET3")
 
-  ddl <- mdb_schema(sample_mdb, table = "Products", backend = "postgres")
+  ddl <- mdb_schema(sample_mdb, table = "Products", backend = "postgres", as_list = FALSE)
   expect_type(ddl, "character")
   expect_true(grepl("CREATE TABLE", ddl, fixed = TRUE))
+})
+
+test_that("mdb_prop returns mdblist by default for object names", {
+  skip_if_not(file.exists(sample_mdb))
+
+  props <- mdb_prop(sample_mdb, "Orders")
+  expect_s3_class(props, "mdblist")
+  expect_identical(names(props), "Orders")
+  expect_true(nchar(props[["Orders"]]) > 0)
+})
+
+test_that("mdb_prop can return named mdblist for multiple objects", {
+  skip_if_not(file.exists(sample_mdb))
+
+  props <- mdb_prop(sample_mdb, c("Orders", "Orders Qry"), as_list = TRUE)
+  expect_s3_class(props, "mdblist")
+  expect_true(all(c("Orders", "Orders Qry") %in% names(props)))
+
+  txt <- capture.output(print(props))
+  expect_true(any(grepl("^\\[Orders\\]", txt)))
+})
+
+test_that("mdb_prop multi-object return class honors as_list", {
+  skip_if_not(file.exists(sample_mdb))
+
+  base_list <- mdb_prop(sample_mdb, c("Orders", "Orders Qry"), as_list = FALSE)
+  expect_type(base_list, "list")
+  expect_false(inherits(base_list, "mdblist"))
+
+  pretty_list <- mdb_prop(sample_mdb, c("Orders", "Orders Qry"), as_list = TRUE)
+  expect_s3_class(pretty_list, "mdblist")
+})
+
+test_that("mdb_queries can return named mdblist for multiple query SQL texts", {
+  skip_if_not(file.exists(sample_mdb))
+
+  queries <- mdb_queries(sample_mdb)
+  supported <- queries[vapply(
+    queries,
+    function(q) !inherits(try(mdb_queries(sample_mdb, query = q, as_list = FALSE), silent = TRUE), "try-error"),
+    logical(1)
+  )]
+  target <- head(supported, 2)
+  skip_if_not(length(target) >= 1)
+
+  sqls <- mdb_queries(sample_mdb, query = target, as_list = TRUE)
+  expect_s3_class(sqls, "mdblist")
+  expect_true(all(target %in% names(sqls)))
+  expect_true(all(vapply(sqls, function(x) is.character(x) && nchar(x) > 0, logical(1))))
+})
+
+test_that("mdb_queries query SQL output is mdblist by default", {
+  skip_if_not(file.exists(sample_mdb))
+
+  queries <- mdb_queries(sample_mdb)
+  supported <- queries[vapply(
+    queries,
+    function(q) !inherits(try(mdb_queries(sample_mdb, query = q, as_list = FALSE), silent = TRUE), "try-error"),
+    logical(1)
+  )]
+  target <- head(supported, 2)
+  skip_if_not(length(target) >= 1)
+
+  sqls <- mdb_queries(sample_mdb, query = target)
+  expect_s3_class(sqls, "mdblist")
+  expect_true(all(target %in% names(sqls)))
+})
+
+test_that("mdb_queries mirrors CLI placeholder for unsupported saved-query layout", {
+  skip_if_not(file.exists(sample_mdb))
+
+  q <- "Summary of Sales by Quarter"
+  skip_if_not(q %in% mdb_queries(sample_mdb))
+
+  sql <- mdb_queries(sample_mdb, query = q, as_list = FALSE)
+  expect_identical(sql, "SELECT  FROM  ")
+})
+
+test_that("mdb_schema selected table output is mdblist by default", {
+  skip_if_not(file.exists(sample_mdb))
+
+  ddl <- mdb_schema(sample_mdb, table = "Products")
+  expect_s3_class(ddl, "mdblist")
+  expect_identical(names(ddl), "Products")
+  expect_true(grepl("CREATE TABLE", ddl[["Products"]], fixed = TRUE))
+})
+
+test_that("mdb_schema can return named mdblist for selected tables", {
+  skip_if_not(file.exists(sample_mdb))
+
+  ddl <- mdb_schema(sample_mdb, table = c("Products", "Orders"), as_list = TRUE)
+  expect_s3_class(ddl, "mdblist")
+  expect_true(all(c("Products", "Orders") %in% names(ddl)))
+  expect_true(all(vapply(ddl, function(x) grepl("CREATE TABLE", x, fixed = TRUE), logical(1))))
+})
+
+test_that("mdb_schema with no table returns mdblist by default", {
+  skip_if_not(file.exists(sample_mdb))
+
+  ddl <- mdb_schema(sample_mdb)
+  expect_s3_class(ddl, "mdblist")
+  expect_true(length(ddl) > 0)
+  expect_true("Products" %in% names(ddl))
+  expect_true(grepl("CREATE TABLE", ddl[[1]], fixed = TRUE))
+})
+
+test_that("mdb_schema output does not include legacy banner", {
+  skip_if_not(file.exists(sample_mdb))
+
+  ddl <- mdb_schema(sample_mdb, table = "Products", as_list = FALSE)
+  expect_false(grepl("MDB Tools - A library for reading MS Access database files", ddl, fixed = TRUE))
 })
 
 test_that("mdb-tables and mdb-queries option mimics behave", {
@@ -176,6 +288,9 @@ test_that("mdb-tables and mdb-queries option mimics behave", {
 
   query_text <- mdb_queries(sample_mdb, list = TRUE, newline = TRUE, as_text = TRUE)
   expect_type(query_text, "character")
+
+  typed_any <- mdb_tables(sample_mdb, type = "any", show_type = TRUE)
+  expect_true(any(grepl("^query ", typed_any)))
 })
 
 test_that("mdb-export and mdb-sql option mimics return text output", {
@@ -203,6 +318,10 @@ test_that("mdb-export and mdb-sql option mimics return text output", {
   )
   expect_type(export_text, "character")
   expect_true(nchar(export_text) > 0)
+
+  # Categories includes binary-like content in nwind; export should not error
+  # due to locale-invalid bytes during quoting.
+  expect_type(mdb_export(sample_mdb, "Categories", n = 1), "character")
 })
 
 test_that("mdb_count fallback preserves WHERE and matches projected-row counts", {
@@ -249,19 +368,19 @@ test_that("test_script.sh command set is covered by mimic wrappers", {
   expect_type(count_mdb, "integer")
   expect_gte(count_mdb, 0L)
 
-  prop_accdb <- mdb_prop(sample_accdb, name = "Asset Items")
+  prop_accdb <- mdb_prop(sample_accdb, name = "Asset Items", as_list = FALSE)
   expect_type(prop_accdb, "character")
   expect_true(nchar(prop_accdb) > 0)
 
-  prop_mdb <- mdb_prop(sample_mdb, name = "Umsätze")
+  prop_mdb <- mdb_prop(sample_mdb, name = "Umsätze", as_list = FALSE)
   expect_type(prop_mdb, "character")
   expect_true(nchar(prop_mdb) > 0)
 
-  schema_accdb <- mdb_schema(sample_accdb)
+  schema_accdb <- mdb_schema(sample_accdb, as_list = FALSE)
   expect_type(schema_accdb, "character")
   expect_true(grepl("CREATE TABLE", schema_accdb, fixed = TRUE))
 
-  schema_mdb <- mdb_schema(sample_mdb)
+  schema_mdb <- mdb_schema(sample_mdb, as_list = FALSE)
   expect_type(schema_mdb, "character")
   expect_true(grepl("CREATE TABLE", schema_mdb, fixed = TRUE))
 
@@ -283,7 +402,7 @@ test_that("test_script.sh command set is covered by mimic wrappers", {
   if (!"qryCostsSummedByOwner" %in% queries_accdb) {
     testthat::skip("Expected query 'qryCostsSummedByOwner' not present in sample accdb.")
   }
-  query_sql <- mdb_queries(sample_accdb, query = "qryCostsSummedByOwner")
+  query_sql <- mdb_queries(sample_accdb, query = "qryCostsSummedByOwner", as_list = FALSE)
   expect_type(query_sql, "character")
   expect_true(grepl("^SELECT", query_sql, ignore.case = TRUE))
 })

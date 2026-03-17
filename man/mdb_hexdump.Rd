@@ -21,3 +21,9 @@ Single hexadecimal string.
 \description{
 Hexdump MDB File (mdb-hexdump mimic)
 }
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  mdb_hexdump(db, n = 16)
+}
+}

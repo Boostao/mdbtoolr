@@ -74,3 +74,9 @@ importation into databases or spreadsheets.
 Used with \code{insert}, it outputs backend-specific SQL \code{INSERT} statements.
 Most formatting options also apply in insert mode.
 }
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  cat(mdb_export(db, "Products", n = 2))
+}
+}

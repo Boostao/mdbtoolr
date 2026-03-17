@@ -15,3 +15,9 @@ Named list with version, table names and query names.
 \description{
 \code{mdb-header(1)} writes C files; this wrapper returns a structured summary.
 }
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  mdb_header(db)
+}
+}

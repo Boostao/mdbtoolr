@@ -49,3 +49,9 @@ In addition to single statements, this wrapper accepts \code{input} files simila
 to \verb{mdb-sql -i file}, strips \code{go} batch terminators, and executes the script
 one statement at a time.
 }
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  mdb_sql(db, "SELECT [ProductID], [ProductName] FROM [Products] LIMIT 3;")
+}
+}

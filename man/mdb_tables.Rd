@@ -42,3 +42,9 @@ suitable for use in shell scripts.
 This wrapper keeps the same option surface where practical, but returns R
 vectors by default and can collapse to CLI-like text with \code{as_text = TRUE}.
 }
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  head(mdb_tables(db))
+}
+}

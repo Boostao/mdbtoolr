@@ -325,7 +325,9 @@ static char *mdbtoolr_build_query_sql(MdbHandle *mdb, const char *query_name) {
   }
 
   if (sql_columns->len == 0 || sql_tables->len == 0) {
-    final_sql = NULL;
+    /* Mirror mdb-queries utility behavior for query layouts that parse
+       but do not yield table/column fragments in this reconstruction path. */
+    final_sql = g_strdup("SELECT  FROM  ");
   } else if (sql_where->len == 0) {
     final_sql = g_strdup_printf(
       "SELECT%s %s FROM %s%s",
@@ -436,15 +438,6 @@ SEXP mdbtoolr_print_schema(SEXP path_sexp, SEXP table_sexp, SEXP backend_sexp, S
   unsigned int i;
   int success = (table_name == NULL);
 
-  static const char *banner =
-    "-- ----------------------------------------------------------\n"
-    "-- MDB Tools - A library for reading MS Access database files\n"
-    "-- Copyright (C) 2000-2011 Brian Bruns and others.\n"
-    "-- Files in libmdb are licensed under LGPL and the utilities under\n"
-    "-- the GPL, see COPYING.LIB and COPYING files respectively.\n"
-    "-- Check out http://mdbtools.sourceforge.net\n"
-    "-- ----------------------------------------------------------\n\n";
-
   mdb = mdb_open(path, MDB_NOFLAGS);
   if (mdb == NULL) {
     Rf_error("Failed to open MDB/ACCDB file: %s", path);
@@ -461,7 +454,7 @@ SEXP mdbtoolr_print_schema(SEXP path_sexp, SEXP table_sexp, SEXP backend_sexp, S
   }
 
   export_options &= (int) mdb->default_backend->capabilities;
-  ddl = g_string_new(banner);
+  ddl = g_string_new("");
 
   {
     const char *charset = mdb_target_charset(mdb);
@@ -720,62 +713,111 @@ SEXP mdbtoolr_file_format(SEXP path_sexp) {
 
 SEXP mdbtoolr_prop_dump(SEXP path_sexp, SEXP name_sexp, SEXP propcol_sexp) {
   const char *path = scalar_char(path_sexp, "path");
-  const char *name = scalar_char(name_sexp, "name");
-  (void) optional_scalar_char(propcol_sexp, "propcol");
+  const char *object_name = scalar_char(name_sexp, "name");
+  const char *propcol = optional_scalar_char(propcol_sexp, "propcol");
   MdbHandle *mdb = NULL;
-  GString *out = NULL;
-  unsigned int i;
-  MdbCatalogEntry *target = NULL;
   MdbTableDef *table = NULL;
+  char *name_buf = NULL;
+  char *prop_buf = NULL;
+  int col_num;
+  int found = 0;
+  MdbColumn *col = NULL;
+  void *kkd = NULL;
+  size_t kkd_size = 0;
+  GPtrArray *aprops = NULL;
+  GString *out = NULL;
+  guint i;
   SEXP res = R_NilValue;
+
+  if (propcol == NULL || !propcol[0]) {
+    propcol = "LvProp";
+  }
 
   mdb = mdb_open(path, MDB_NOFLAGS);
   if (mdb == NULL) {
     Rf_error("Failed to open MDB/ACCDB file: %s", path);
   }
 
-  if (!mdb_read_catalog(mdb, MDB_ANY)) {
+  table = mdb_read_table_by_name(mdb, "MSysObjects", MDB_ANY);
+  if (table == NULL) {
     mdb_close(mdb);
-    Rf_error("Failed to read catalog for property dump.");
+    Rf_error("Failed to read MSysObjects for property dump.");
   }
 
-  for (i = 0; i < mdb->num_catalog; i++) {
-    MdbCatalogEntry *entry = (MdbCatalogEntry *) g_ptr_array_index(mdb->catalog, i);
-    if (entry != NULL && strcmp(entry->object_name, name) == 0) {
-      target = entry;
+  if (mdb_read_columns(table) == NULL) {
+    mdb_free_tabledef(table);
+    mdb_close(mdb);
+    Rf_error("Failed to read MSysObjects columns for property dump.");
+  }
+
+  name_buf = (char *) g_malloc0(mdb->bind_size);
+  prop_buf = (char *) g_malloc0(mdb->bind_size);
+  if (name_buf == NULL || prop_buf == NULL) {
+    g_free(name_buf);
+    g_free(prop_buf);
+    mdb_free_tabledef(table);
+    mdb_close(mdb);
+    Rf_error("Out of memory while preparing property dump.");
+  }
+
+  mdb_bind_column_by_name(table, "Name", name_buf, NULL);
+  col_num = mdb_bind_column_by_name(table, (char *) propcol, prop_buf, NULL);
+  if (col_num < 1) {
+    g_free(name_buf);
+    g_free(prop_buf);
+    mdb_free_tabledef(table);
+    mdb_close(mdb);
+    Rf_error("Column %s not found in MSysObjects.", propcol);
+  }
+
+  mdb_rewind_table(table);
+  while (mdb_fetch_row(table)) {
+    if (strcmp(name_buf, object_name) == 0) {
+      found = 1;
       break;
     }
   }
 
-  if (target == NULL) {
+  if (!found) {
+    g_free(name_buf);
+    g_free(prop_buf);
+    mdb_free_tabledef(table);
     mdb_close(mdb);
-    Rf_error("Object not found: %s", name);
+    Rf_error("Object %s not found in database file.", object_name);
   }
 
-  table = mdb_read_table(target);
-  if (table == NULL || mdb_read_columns(table) == NULL) {
-    if (table != NULL) {
-      mdb_free_tabledef(table);
+  col = (MdbColumn *) g_ptr_array_index(table->columns, (guint) (col_num - 1));
+  kkd = mdb_ole_read_full(mdb, col, &kkd_size);
+  out = g_string_new("");
+
+  if (kkd != NULL && kkd_size > 0) {
+    aprops = mdb_kkd_to_props(mdb, kkd, kkd_size);
+    if (aprops != NULL) {
+      for (i = 0; i < aprops->len; ++i) {
+        MdbProperties *props = (MdbProperties *) g_ptr_array_index(aprops, i);
+        if (props == NULL) {
+          continue;
+        }
+        g_string_append(out, "name: ");
+        g_string_append(out, props->name ? props->name : "(none)");
+        g_string_append(out, "\n");
+        append_properties(out, props->hash);
+        g_string_append(out, "\n");
+        mdb_free_props(props);
+      }
+      g_ptr_array_free(aprops, TRUE);
     }
-    mdb_close(mdb);
-    Rf_error("Failed to read object metadata: %s", name);
   }
 
-  out = g_string_new("name: (none)\n");
-  if (table->props != NULL && table->props->hash != NULL) {
-    append_properties(out, table->props->hash);
+  if (out->len == 0) {
+    g_string_append(out, "No properties.\n");
   }
 
-  for (i = 0; i < table->num_cols; i++) {
-    MdbColumn *col = (MdbColumn *) g_ptr_array_index(table->columns, i);
-    if (col == NULL || col->props == NULL || col->props->hash == NULL) {
-      continue;
-    }
-    g_string_append(out, "\nname: ");
-    g_string_append(out, col->name);
-    g_string_append(out, "\n");
-    append_properties(out, col->props->hash);
+  if (kkd != NULL) {
+    free(kkd);
   }
+  g_free(name_buf);
+  g_free(prop_buf);
 
   res = PROTECT(Rf_mkString(out->str));
   g_string_free(out, TRUE);

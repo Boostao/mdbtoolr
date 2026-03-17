@@ -17,21 +17,9 @@ remotes::install_github("boostao/mdbtoolr")
 library(DBI)
 library(mdbtoolr)
 
-# 1) Prefer your own Access file path.
-db_path <- "path/to/your/database.accdb"
-
-# 2) Optional: use bundled test fixture when available.
-fixture <- system.file("tests", "testthat", "mdbtestdata", "data", "nwind.mdb", package = "mdbtoolr")
-if (nzchar(fixture)) {
-  db_path <- fixture
-}
-
-if (!file.exists(db_path)) {
-  stop("Set `db_path` to a valid .mdb/.accdb file.")
-}
+db_path <- system.file("tests", "testthat", "mdbtestdata", "data", "nwind.mdb", package = "mdbtoolr")
 
 con <- dbConnect(mdb(), dbname = db_path)
-on.exit(dbDisconnect(con), add = TRUE)
 
 dbListTables(con)
 dbListFields(con, "Products")

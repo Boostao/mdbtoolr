@@ -22,3 +22,10 @@ Named list, one entry per selected column.
 \code{mdb-array(1)} emits C source; this wrapper returns a named R list of columns
 while keeping equivalent database/table inputs.
 }
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  arr <- mdb_array(db, "Products", columns = c("ProductID", "ProductName"), n = 2)
+  str(arr)
+}
+}

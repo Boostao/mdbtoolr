@@ -34,3 +34,9 @@ JSON string.
 It produces JSON output for the given table. Such output is suitable for
 parsing in a variety of languages.
 }
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db) && requireNamespace("jsonlite", quietly = TRUE)) {
+  mdb_json(db, "Products", n = 2)
+}
+}

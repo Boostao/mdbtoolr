@@ -22,3 +22,8 @@ Character scalar with generated C code (invisibly when written).
 \code{mdb-parsecsv(1)} converts CSV to C arrays. This wrapper returns generated C
 source text and can optionally write it to a file.
 }
+\examples{
+csv <- tempfile(fileext = ".csv")
+writeLines(c("id,name", "1,alpha", "2,beta"), csv)
+cat(mdb_parsecsv(csv))
+}

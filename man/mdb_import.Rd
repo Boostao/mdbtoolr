@@ -24,3 +24,11 @@ No return; always errors in read-only mode.
 \code{mdb-import(1)} writes to MDB files. This package is read-only, so this
 function validates CLI-like options and then errors.
 }
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  csv <- tempfile(fileext = ".csv")
+  writeLines("id,name\n1,alpha", csv)
+  try(mdb_import(db, "Products", csv))
+}
+}

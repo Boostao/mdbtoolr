@@ -33,10 +33,10 @@
 
   value <- as.character(x)
   if (escape_invisible) {
-    value <- gsub("\\\\", "\\\\\\\\", value, fixed = TRUE)
-    value <- gsub("\\r", "\\\\r", value, fixed = TRUE)
-    value <- gsub("\\n", "\\\\n", value, fixed = TRUE)
-    value <- gsub("\\t", "\\\\t", value, fixed = TRUE)
+    value <- gsub("\\\\", "\\\\\\\\", value, fixed = TRUE, useBytes = TRUE)
+    value <- gsub("\\r", "\\\\r", value, fixed = TRUE, useBytes = TRUE)
+    value <- gsub("\\n", "\\\\n", value, fixed = TRUE, useBytes = TRUE)
+    value <- gsub("\\t", "\\\\t", value, fixed = TRUE, useBytes = TRUE)
   }
 
   if (isTRUE(no_quote)) {
@@ -44,9 +44,9 @@
   }
 
   if (is.null(escape)) {
-    value <- gsub(quote, paste0(quote, quote), value, fixed = TRUE)
+    value <- gsub(quote, paste0(quote, quote), value, fixed = TRUE, useBytes = TRUE)
   } else {
-    value <- gsub(quote, paste0(escape, quote), value, fixed = TRUE)
+    value <- gsub(quote, paste0(escape, quote), value, fixed = TRUE, useBytes = TRUE)
   }
   paste0(quote, value, quote)
 }
@@ -152,6 +152,61 @@
   parts
 }
 
+.mdb_example_nwind_path <- function() {
+  candidates <- c(
+    Sys.getenv("MDBTOOLR_EXAMPLE_DB", unset = ""),
+    "tests/testthat/mdbtestdata/data/nwind.mdb",
+    system.file("testthat", "mdbtestdata", "data", "nwind.mdb", package = "mdbtoolr"),
+    system.file("tests", "testthat", "mdbtestdata", "data", "nwind.mdb", package = "mdbtoolr")
+  )
+
+  candidates <- unique(candidates[nzchar(candidates)])
+  hits <- candidates[file.exists(candidates)]
+  if (!length(hits)) {
+    return("")
+  }
+  normalizePath(hits[[1]], mustWork = TRUE)
+}
+
+.as_mdblist <- function(x) {
+  if (length(x) == 0L) {
+    return(structure(x, class = "mdblist"))
+  }
+  if (is.null(names(x)) || any(!nzchar(names(x)))) {
+    stop("`mdblist` entries must be named.", call. = FALSE)
+  }
+  structure(x, class = "mdblist")
+}
+
+#' Print Method For `mdblist`
+#'
+#' Pretty printer for multi-object text outputs returned by selected
+#' `mdb_*` helpers when `as_list = TRUE` (default).
+#'
+#' @param x A `mdblist` object.
+#' @param ... Unused.
+#'
+#' @return The input object, invisibly.
+#' @export
+print.mdblist <- function(x, ...) {
+  n <- length(x)
+  if (n == 0L) {
+    cat("<mdblist[0]>\n")
+    return(invisible(x))
+  }
+
+  for (i in seq_len(n)) {
+    nm <- names(x)[[i]]
+    cat("[", nm, "]\n", sep = "")
+    val <- x[[i]]
+    if (!is.null(val) && length(val) > 0L) {
+      cat(as.character(val), sep = "\n")
+    }
+  }
+
+  invisible(x)
+}
+
 #' Get Listing Of Tables In An MDB Database
 #'
 #' `mdb-tables` is a utility program distributed with MDB Tools.
@@ -170,6 +225,11 @@
 #' @param as_text Logical; when `TRUE`, return one delimited string.
 #'
 #' @return Character vector by default, or scalar character when `as_text = TRUE`.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   head(mdb_tables(db))
+#' }
 #' @export
 mdb_tables <- function(path, system = FALSE, single_column = FALSE, delimiter = NULL,
                        type = c("table", "query", "systable", "any", "all", "form", "macro", "report", "linkedtable", "module", "relationship", "dbprop"),
@@ -201,8 +261,11 @@ mdb_tables <- function(path, system = FALSE, single_column = FALSE, delimiter = 
   }
 
   if (isTRUE(show_type)) {
-    label <- if (type %in% c("query")) "query" else "table"
-    out <- paste(label, out)
+    out <- ifelse(
+      out %in% queries,
+      paste("query", out),
+      paste("table", out)
+    )
   }
 
   delim <- if (!is.null(delimiter)) delimiter else if (isTRUE(single_column)) "\n" else "\t"
@@ -227,13 +290,40 @@ mdb_tables <- function(path, system = FALSE, single_column = FALSE, delimiter = 
 #' @param newline Logical, equivalent to `-1/--newline`.
 #' @param delimiter Delimiter equivalent to `-d/--delimiter` (default single space).
 #' @param as_text Logical; when `TRUE`, returns delimited scalar text for listings.
+#' @param as_list Logical; defaults to `TRUE`. When `TRUE`, returns a named
+#' `mdblist` for query SQL outputs.
 #'
 #' @return Character vector of query names, query SQL text, or delimited scalar text.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   q <- mdb_queries(db)
+#'   head(q)
+#'   q_sql <- mdb_queries(db, query = c("Orders Qry", "Product Sales for 1997"), as_list = TRUE)
+#'   q_sql
+#' }
 #' @export
-mdb_queries <- function(path, query = NULL, list = TRUE, newline = FALSE, delimiter = " ", as_text = FALSE) {
+mdb_queries <- function(path, query = NULL, list = TRUE, newline = FALSE, delimiter = " ", as_text = FALSE, as_list = TRUE) {
   path <- .mdb_normalize_path(path)
   if (!is.null(query) && nzchar(as.character(query[[1]]))) {
-    return(.native_get_query_sql(path, as.character(query[[1]])))
+    query <- as.character(query)
+    query <- query[nzchar(query)]
+    if (!length(query)) {
+      return(character(0))
+    }
+
+    out <- stats::setNames(lapply(query, function(q) .native_get_query_sql(path, q)), query)
+    out <- lapply(out, as.character)
+
+    if (isTRUE(as_list)) {
+      return(.as_mdblist(out))
+    }
+
+    if (length(out) > 1L) {
+      return(out)
+    }
+
+    return(out[[1]])
   }
   if (!isTRUE(list)) {
     return(character(0))
@@ -269,6 +359,11 @@ mdb_queries <- function(path, query = NULL, list = TRUE, newline = FALSE, delimi
 #'
 #' @importFrom utils capture.output
 #' @return `data.frame` by default, or character scalar in text mode.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   mdb_sql(db, "SELECT [ProductID], [ProductName] FROM [Products] LIMIT 3;")
+#' }
 #' @export
 mdb_sql <- function(path, statement = NULL, no_header = FALSE, no_footer = FALSE,
                     no_pretty_print = FALSE, delimiter = "\t", input = NULL,
@@ -346,6 +441,11 @@ mdb_sql <- function(path, statement = NULL, no_header = FALSE, no_footer = FALSE
 #' @param version Logical; when `TRUE`, return mdbtools version (`--version`).
 #'
 #' @return Integer row count or version string.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   mdb_count(db, "Orders")
+#' }
 #' @export
 mdb_count <- function(path, table = NULL, where = NULL, version = FALSE) {
   if (isTRUE(version)) {
@@ -402,15 +502,64 @@ mdb_count <- function(path, table = NULL, where = NULL, version = FALSE) {
 #' @param not_empty Include `CHECK <> ''` constraints.
 #' @param comments Include `COMMENT ON` statements.
 #' @param indexes Export indexes.
-#' @param relations Export foreign key constraints.
+#' @param relations Request foreign key constraints. Current library-mode
+#' implementation emits a placeholder comment; full FK export is not yet
+#' implemented.
+#' @param as_list Logical; defaults to `TRUE`. When `TRUE`, returns a named
+#' `mdblist` of DDL text entries keyed by table name.
 #'
-#' @return Character scalar containing the generated DDL.
+#' @return When `as_list = TRUE`, a named `mdblist` of table-level DDL text.
+#' If `table = NULL`, all user tables are included. When `as_list = FALSE`,
+#' a character scalar is returned for a single table or for `table = NULL`, and
+#' a plain named list is returned for multiple tables.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   cat(mdb_schema(db, table = "Products", backend = "postgres", as_list = FALSE))
+#'   ddl <- mdb_schema(db, table = c("Products", "Orders"), as_list = TRUE)
+#'   ddl
+#' }
 #' @export
 mdb_schema <- function(path, table = NULL, namespace = NULL,
                        backend = c("access", "sybase", "oracle", "postgres", "mysql", "sqlite"),
                        drop_table = FALSE, not_null = TRUE, default_values = FALSE,
                        not_empty = FALSE, comments = TRUE, indexes = TRUE,
-                       relations = TRUE) {
+                       relations = TRUE, as_list = TRUE) {
+  table_vec <- if (is.null(table)) NULL else as.character(table)
+  table_vec <- if (is.null(table_vec)) NULL else table_vec[nzchar(table_vec)]
+
+  if (isTRUE(as_list) && is.null(table_vec)) {
+    table_vec <- mdb_tables(path, system = FALSE, type = "table")
+    table_vec <- table_vec[nzchar(table_vec)]
+    if (!length(table_vec)) {
+      return(.as_mdblist(list()))
+    }
+  }
+
+  if (!is.null(table_vec) && (length(table_vec) > 1L || isTRUE(as_list))) {
+    out <- stats::setNames(vector("list", length(table_vec)), table_vec)
+    for (nm in table_vec) {
+      out[[nm]] <- mdb_schema(
+        path = path,
+        table = nm,
+        namespace = namespace,
+        backend = backend,
+        drop_table = drop_table,
+        not_null = not_null,
+        default_values = default_values,
+        not_empty = not_empty,
+        comments = comments,
+        indexes = indexes,
+        relations = relations,
+        as_list = FALSE
+      )
+    }
+    if (isTRUE(as_list)) {
+      return(.as_mdblist(out))
+    }
+    return(out)
+  }
+
   backend <- match.arg(backend)
   export_options <- .mdb_schema_options(
     drop_table = drop_table,
@@ -424,7 +573,7 @@ mdb_schema <- function(path, table = NULL, namespace = NULL,
 
   .native_print_schema(
     path = .mdb_normalize_path(path),
-    table = if (!is.null(table)) as.character(table[[1]]) else NULL,
+    table = if (!is.null(table_vec) && length(table_vec)) table_vec[[1]] else NULL,
     backend = backend,
     namespace = if (!is.null(namespace)) as.character(namespace[[1]]) else NULL,
     export_options = export_options
@@ -443,6 +592,12 @@ mdb_schema <- function(path, table = NULL, namespace = NULL,
 #' @param version Logical, equivalent to `-M/--version`.
 #'
 #' @return Single character string with file format or mdbtools version.
+#' @examples
+#' mdb_ver()
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   mdb_ver(db)
+#' }
 #' @export
 mdb_ver <- function(path = NULL, version = FALSE) {
   if (isTRUE(version) || is.null(path)) {
@@ -462,6 +617,12 @@ mdb_ver <- function(path = NULL, version = FALSE) {
 #' @param n Optional row limit (`LIMIT n`).
 #'
 #' @return Named list, one entry per selected column.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   arr <- mdb_array(db, "Products", columns = c("ProductID", "ProductName"), n = 2)
+#'   str(arr)
+#' }
 #' @export
 mdb_array <- function(path, table, columns = NULL, n = -1L) {
   table <- as.character(table[[1]])
@@ -502,6 +663,11 @@ mdb_array <- function(path, table, columns = NULL, n = -1L) {
 #' @param n Optional row limit (`LIMIT n`).
 #'
 #' @return Character scalar containing CSV or SQL INSERT text.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   cat(mdb_export(db, "Products", n = 2))
+#' }
 #' @export
 mdb_export <- function(path, table, no_header = FALSE, delimiter = ",", row_delimiter = "\n",
                        no_quote = FALSE, quote = '"', escape = NULL, escape_invisible = FALSE,
@@ -510,6 +676,10 @@ mdb_export <- function(path, table, no_header = FALSE, delimiter = ",", row_deli
                        boolean_words = FALSE, insert = NULL, namespace = NULL,
                        batch_size = 1L, n = -1L) {
   bin <- match.arg(bin)
+  if (bin != "strip") {
+    warning("`bin` modes other than 'strip' are not fully implemented in library-only mode.", call. = FALSE)
+  }
+
   df <- .mdb_query_table(path, table, n = n)
   df <- .mdb_apply_datetime_formats(df, date_format = date_format, datetime_format = datetime_format)
   df <- .mdb_apply_boolean_words(df, boolean_words = boolean_words)
@@ -571,6 +741,11 @@ mdb_export <- function(path, table, no_header = FALSE, delimiter = ",", row_deli
 #' @param path Path to `.mdb`/`.accdb` file.
 #'
 #' @return Named list with version, table names and query names.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   mdb_header(db)
+#' }
 #' @export
 mdb_header <- function(path) {
   list(
@@ -588,6 +763,11 @@ mdb_header <- function(path) {
 #' @param n Number of bytes to emit.
 #'
 #' @return Single hexadecimal string.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   mdb_hexdump(db, n = 16)
+#' }
 #' @export
 mdb_hexdump <- function(path, pagenumber = NULL, page_size = 4096L, n = 256L) {
   con <- file(path, "rb")
@@ -611,6 +791,13 @@ mdb_hexdump <- function(path, pagenumber = NULL, page_size = 4096L, n = 256L) {
 #' @param delimiter Equivalent to `-d/--delimiter`.
 #'
 #' @return No return; always errors in read-only mode.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   csv <- tempfile(fileext = ".csv")
+#'   writeLines("id,name\n1,alpha", csv)
+#'   try(mdb_import(db, "Products", csv))
+#' }
 #' @export
 mdb_import <- function(path, table, csvfile, header_lines = 0L, delimiter = ",") {
   stop("`mdb_import()` is not available: this package currently supports read-only MDB/ACCDB operations.", call. = FALSE)
@@ -631,6 +818,11 @@ mdb_import <- function(path, table, csvfile, header_lines = 0L, delimiter = ",")
 #'
 #' @return JSON string.
 #' @importFrom jsonlite toJSON
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db) && requireNamespace("jsonlite", quietly = TRUE)) {
+#'   mdb_json(db, "Products", n = 2)
+#' }
 #' @export
 mdb_json <- function(path, table, date_format = "%Y-%m-%d", time_format = "%Y-%m-%d %H:%M:%S",
                      no_unprintable = FALSE, n = -1L) {
@@ -654,6 +846,10 @@ mdb_json <- function(path, table, date_format = "%Y-%m-%d", time_format = "%Y-%m
 #' @param header Logical; whether CSV includes header row.
 #'
 #' @return Character scalar with generated C code (invisibly when written).
+#' @examples
+#' csv <- tempfile(fileext = ".csv")
+#' writeLines(c("id,name", "1,alpha", "2,beta"), csv)
+#' cat(mdb_parsecsv(csv))
 #' @export
 mdb_parsecsv <- function(file, output_file = NULL, sep = ",", header = TRUE) {
   if (!file.exists(file)) {
@@ -701,19 +897,48 @@ mdb_parsecsv <- function(file, output_file = NULL, sep = ",", header = TRUE) {
 #' @param name Object name (`table`, `query`, etc.).
 #' @param propcol Property column name. Defaults to `LvProp`.
 #' @param version Logical; when `TRUE`, return mdbtools version.
+#' @param as_list Logical; defaults to `TRUE`. When `TRUE`, returns a named
+#' `mdblist` with one entry per requested object in `name`.
 #'
-#' @return Character scalar containing the command output.
+#' @return `mdblist` by default; when `as_list = FALSE`, returns a character
+#' scalar for one object name or a plain named list for multiple names.
+#' @examples
+#' db <- mdbtoolr:::.mdb_example_nwind_path()
+#' if (nzchar(db)) {
+#'   cat(mdb_prop(db, "Orders", as_list = FALSE))
+#'   p <- mdb_prop(db, c("Orders", "Orders Qry"), as_list = TRUE)
+#'   p
+#' }
 #' @export
-mdb_prop <- function(path, name = NULL, propcol = "LvProp", version = FALSE) {
+mdb_prop <- function(path, name = NULL, propcol = "LvProp", version = FALSE, as_list = TRUE) {
   if (isTRUE(version)) {
     return(mdb_ver())
   }
   if (is.null(name)) {
     stop("`name` is required unless `version = TRUE`.", call. = FALSE)
   }
-  .native_prop_dump(
-    .mdb_normalize_path(path),
-    as.character(name[[1]]),
-    if (!is.null(propcol) && nzchar(propcol)) as.character(propcol[[1]]) else NULL
+
+  path <- .mdb_normalize_path(path)
+  name <- as.character(name)
+  name <- name[nzchar(name)]
+  if (!length(name)) {
+    stop("`name` must contain at least one non-empty object name.", call. = FALSE)
+  }
+
+  propcol <- if (!is.null(propcol) && nzchar(propcol)) as.character(propcol[[1]]) else NULL
+
+  out <- stats::setNames(
+    lapply(name, function(nm) .native_prop_dump(path, nm, propcol)),
+    name
   )
+
+  if (isTRUE(as_list)) {
+    return(.as_mdblist(out))
+  }
+
+  if (length(out) > 1L) {
+    return(out)
+  }
+
+  out[[1]]
 }

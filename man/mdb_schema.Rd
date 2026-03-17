@@ -15,7 +15,8 @@ mdb_schema(
   not_empty = FALSE,
   comments = TRUE,
   indexes = TRUE,
-  relations = TRUE
+  relations = TRUE,
+  as_list = TRUE
 )
 }
 \arguments{
@@ -42,14 +43,30 @@ export all user tables.}
 
 \item{indexes}{Export indexes.}
 
-\item{relations}{Export foreign key constraints.}
+\item{relations}{Request foreign key constraints. Current library-mode
+implementation emits a placeholder comment; full FK export is not yet
+implemented.}
+
+\item{as_list}{Logical; defaults to \code{TRUE}. When \code{TRUE}, returns a named
+\code{mdblist} of DDL text entries keyed by table name.}
 }
 \value{
-Character scalar containing the generated DDL.
+When \code{as_list = TRUE}, a named \code{mdblist} of table-level DDL text.
+If \code{table = NULL}, all user tables are included. When \code{as_list = FALSE},
+a character scalar is returned for a single table or for \code{table = NULL}, and
+a plain named list is returned for multiple tables.
 }
 \description{
 \code{mdb-schema} is a utility program distributed with MDB Tools.
 It produces DDL (data definition language) output for the given database.
 This can be passed to another database to create a replica of the original
 Access table format.
+}
+\examples{
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  cat(mdb_schema(db, table = "Products", backend = "postgres", as_list = FALSE))
+  ddl <- mdb_schema(db, table = c("Products", "Orders"), as_list = TRUE)
+  ddl
+}
 }

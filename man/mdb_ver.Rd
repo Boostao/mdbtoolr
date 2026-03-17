@@ -21,3 +21,10 @@ that produced the file: \code{JET3} (for files produced by Access 97), \code{JET
 (Access 2000, XP and 2003), \code{ACE12} (Access 2007), \code{ACE14} (Access 2010),
 \code{ACE15} (Access 2013), or \code{ACE16} (Access 2016).
 }
+\examples{
+mdb_ver()
+db <- mdbtoolr:::.mdb_example_nwind_path()
+if (nzchar(db)) {
+  mdb_ver(db)
+}
+}
