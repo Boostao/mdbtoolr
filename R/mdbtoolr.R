@@ -1,34 +1,3 @@
-#' Create an mdbtoolr Driver
-#'
-#' `mdb()` is the canonical DBI-style constructor.
-#'
-#' @return A DBI driver for '.mdb' and '.accdb' files.
-#' @export
-mdb <- function() {
-  methods::new("MdbDriver")
-}
-
-methods::setClass("MdbDriver", contains = "DBIDriver")
-
-methods::setClass(
-  "MdbConnection",
-  contains = "DBIConnection",
-  slots = c(
-    path = "character",
-    open = "logical"
-  )
-)
-
-methods::setClass(
-  "MdbResult",
-  contains = "DBIResult",
-  slots = c(
-    data = "data.frame",
-    position = "integer",
-    completed = "logical"
-  )
-)
-
 .is_mdb_path <- function(x) {
   is.character(x) && length(x) == 1L && grepl("\\.(mdb|accdb)$", x, ignore.case = TRUE)
 }
@@ -51,8 +20,16 @@ methods::setClass(
   .Call("mdbtoolr_list_tables", path)
 }
 
+.native_list_queries <- function(path) {
+  .Call("mdbtoolr_list_queries", path)
+}
+
 .native_list_fields <- function(path, table) {
   .Call("mdbtoolr_list_fields", path, table)
+}
+
+.native_table_num_rows <- function(path, table) {
+  .Call("mdbtoolr_table_num_rows", path, table)
 }
 
 .native_read_table <- function(path, table) {
@@ -63,6 +40,54 @@ methods::setClass(
   .Call("mdbtoolr_run_query", path, statement)
 }
 
+.native_get_query_sql <- function(path, query_name) {
+  .Call("mdbtoolr_get_query_sql", path, query_name)
+}
+
+.native_print_schema <- function(path, table = NULL, backend = NULL, namespace = NULL, export_options = NULL) {
+  .Call("mdbtoolr_print_schema", path, table, backend, namespace, export_options)
+}
+
+.native_mdbtools_version <- function() {
+  .Call("mdbtoolr_version")
+}
+
+.native_file_format <- function(path) {
+  .Call("mdbtoolr_file_format", path)
+}
+
+.native_prop_dump <- function(path, name, propcol = NULL) {
+  .Call("mdbtoolr_prop_dump", path, name, propcol)
+}
+
+.trim_sql_semicolon <- function(x) {
+  x <- trimws(x)
+  sub(";\\s*$", "", x)
+}
+
+.expand_saved_query_statement <- function(path, statement) {
+  pattern <- "^\\s*SELECT\\s+\\*\\s+FROM\\s+\\[([^\\]]+)\\]\\s*(?:LIMIT\\s+([0-9]+))?\\s*;?\\s*$"
+  m <- regexec(pattern, statement, ignore.case = TRUE, perl = TRUE)
+  hit <- regmatches(statement, m)[[1]]
+  if (length(hit) == 0L) {
+    return(statement)
+  }
+
+  query_name <- hit[[2]]
+  limit <- if (length(hit) >= 3L) hit[[3]] else ""
+  queries <- .native_list_queries(path)
+  if (!query_name %in% queries) {
+    return(statement)
+  }
+
+  query_sql <- .native_get_query_sql(path, query_name)
+  query_sql <- .trim_sql_semicolon(query_sql)
+  if (nzchar(limit)) {
+    query_sql <- paste0(query_sql, " LIMIT ", limit)
+  }
+  query_sql
+}
+
 .as_data_frame <- function(x) {
   if (length(x) == 0L) {
     return(data.frame())
@@ -71,216 +96,118 @@ methods::setClass(
   as.data.frame(x, check.names = FALSE, stringsAsFactors = FALSE, optional = TRUE)
 }
 
-methods::setMethod(
-  "dbCanConnect",
-  "MdbDriver",
-  function(drv, ...) {
-    tryCatch({
-      conn <- DBI::dbConnect(drv, ...)
-      on.exit(DBI::dbDisconnect(conn), add = TRUE)
-      TRUE
-    }, error = function(e) {
-      FALSE
-    })
-  }
+.MDB_TYPE <- list(
+  BOOL = 0x01L,
+  BYTE = 0x02L,
+  INT = 0x03L,
+  LONGINT = 0x04L,
+  MONEY = 0x05L,
+  FLOAT = 0x06L,
+  DOUBLE = 0x07L,
+  DATETIME = 0x08L,
+  BINARY = 0x09L,
+  TEXT = 0x0aL,
+  OLE = 0x0bL,
+  MEMO = 0x0cL,
+  REPID = 0x0fL,
+  NUMERIC = 0x10L,
+  COMPLEX = 0x12L
 )
 
-methods::setMethod(
-  "dbConnect",
-  "MdbDriver",
-  function(drv, dbname, ...) {
-    if (missing(dbname) || !is.character(dbname) || length(dbname) != 1L) {
-      stop("`dbname` must be a single '.mdb' or '.accdb' path.", call. = FALSE)
+.normalize_string_na <- function(x) {
+  x <- trimws(as.character(x))
+  x[x == ""] <- NA_character_
+  x
+}
+
+.coerce_logical <- function(x) {
+  out <- rep(NA, length(x))
+  if (!length(x)) {
+    return(out)
+  }
+
+  y <- tolower(trimws(as.character(x)))
+  false_vals <- c("0", "false", "f", "no", "n")
+  true_vals <- c("1", "-1", "true", "t", "yes", "y")
+
+  out[y %in% false_vals] <- FALSE
+  out[y %in% true_vals] <- TRUE
+  out[y == ""] <- NA
+  out
+}
+
+.coerce_datetime <- function(x) {
+  y <- .normalize_string_na(x)
+  out <- rep(as.POSIXct(NA_real_, origin = "1970-01-01", tz = "UTC"), length(y))
+  if (!length(y)) {
+    return(out)
+  }
+
+  formats <- c(
+    "%Y-%m-%d %H:%M:%OS",
+    "%Y-%m-%d %H:%M",
+    "%Y-%m-%d",
+    "%m/%d/%Y %H:%M:%OS",
+    "%m/%d/%Y %H:%M",
+    "%m/%d/%Y",
+    "%d/%m/%Y %H:%M:%OS",
+    "%d/%m/%Y %H:%M",
+    "%d/%m/%Y"
+  )
+
+  pending <- !is.na(y)
+  for (fmt in formats) {
+    if (!any(pending)) {
+      break
     }
-
-    path <- normalizePath(dbname, mustWork = TRUE)
-    methods::new("MdbConnection", path = path, open = TRUE)
-  }
-)
-
-methods::setMethod(
-  "dbConnect",
-  "character",
-  function(drv, ...) {
-    if (.is_mdb_path(drv)) {
-      return(DBI::dbConnect(mdb(), dbname = drv, ...))
+    parsed <- as.POSIXct(y[pending], format = fmt, tz = "UTC")
+    ok <- !is.na(parsed)
+    if (any(ok)) {
+      idx <- which(pending)[ok]
+      out[idx] <- parsed[ok]
+      pending[idx] <- FALSE
     }
-
-    stop(
-      "When using a character first argument, provide an '.mdb' or '.accdb' path, ",
-      "or call DBI::dbConnect(mdb(), dbname = ...).",
-      call. = FALSE
-    )
   }
-)
 
-methods::setMethod(
-  "dbDisconnect",
-  "MdbConnection",
-  function(conn, ...) {
-    conn@open <- FALSE
-    TRUE
+  out
+}
+
+.coerce_column_by_type <- function(x, type_code) {
+  type_code <- as.integer(type_code[[1]])
+
+  if (is.na(type_code) || !length(x)) {
+    return(x)
   }
-)
 
-methods::setMethod(
-  "dbIsValid",
-  "MdbConnection",
-  function(dbObj, ...) {
-    isTRUE(dbObj@open) && file.exists(dbObj@path)
+  if (type_code == .MDB_TYPE$BOOL) {
+    return(.coerce_logical(x))
   }
-)
 
-methods::setMethod(
-  "dbListTables",
-  "MdbConnection",
-  function(conn, ...) {
-    .require_valid_connection(conn)
-    .native_list_tables(conn@path)
+  if (type_code %in% c(.MDB_TYPE$BYTE, .MDB_TYPE$INT, .MDB_TYPE$LONGINT)) {
+    return(suppressWarnings(as.integer(.normalize_string_na(x))))
   }
-)
 
-methods::setMethod(
-  "dbExistsTable",
-  c("MdbConnection", "character"),
-  function(conn, name, ...) {
-    .require_valid_connection(conn)
-    .as_table_name(name) %in% DBI::dbListTables(conn)
+  if (type_code %in% c(.MDB_TYPE$MONEY, .MDB_TYPE$FLOAT, .MDB_TYPE$DOUBLE, .MDB_TYPE$NUMERIC)) {
+    return(suppressWarnings(as.numeric(.normalize_string_na(x))))
   }
-)
 
-methods::setMethod(
-  "dbExistsTable",
-  c("MdbConnection", "Id"),
-  function(conn, name, ...) {
-    DBI::dbExistsTable(conn, .as_table_name(name))
+  if (type_code == .MDB_TYPE$DATETIME) {
+    return(.coerce_datetime(x))
   }
-)
 
-methods::setMethod(
-  "dbListFields",
-  c("MdbConnection", "character"),
-  function(conn, name, ...) {
-    .require_valid_connection(conn)
-    table_name <- .as_table_name(name)
-    .native_list_fields(conn@path, table_name)
+  x
+}
+
+.coerce_mdb_data_frame <- function(df, source) {
+  type_codes <- attr(source, "mdb_col_types", exact = TRUE)
+  if (is.null(type_codes) || !length(type_codes) || !ncol(df)) {
+    return(df)
   }
-)
 
-methods::setMethod(
-  "dbListFields",
-  c("MdbConnection", "Id"),
-  function(conn, name, ...) {
-    DBI::dbListFields(conn, .as_table_name(name))
+  n <- min(length(type_codes), ncol(df))
+  for (i in seq_len(n)) {
+    df[[i]] <- .coerce_column_by_type(df[[i]], type_codes[[i]])
   }
-)
 
-methods::setMethod(
-  "dbReadTable",
-  c("MdbConnection", "character"),
-  function(conn, name, ...) {
-    .require_valid_connection(conn)
-    table_name <- .as_table_name(name)
-    .as_data_frame(.native_read_table(conn@path, table_name))
-  }
-)
-
-methods::setMethod(
-  "dbReadTable",
-  c("MdbConnection", "Id"),
-  function(conn, name, ...) {
-    DBI::dbReadTable(conn, .as_table_name(name), ...)
-  }
-)
-
-methods::setMethod(
-  "dbQuoteIdentifier",
-  c("MdbConnection", "character"),
-  function(conn, x, ...) {
-    DBI::SQL(paste0("[", gsub("]", "]]", x, fixed = TRUE), "]"))
-  }
-)
-
-methods::setMethod(
-  "dbSendQuery",
-  c("MdbConnection", "character"),
-  function(conn, statement, ...) {
-    .require_valid_connection(conn)
-    data <- .as_data_frame(.native_run_query(conn@path, statement))
-    methods::new(
-      "MdbResult",
-      data = data,
-      position = 0L,
-      completed = nrow(data) == 0L
-    )
-  }
-)
-
-methods::setMethod(
-  "dbGetQuery",
-  c("MdbConnection", "character"),
-  function(conn, statement, ...) {
-    res <- DBI::dbSendQuery(conn, statement, ...)
-    on.exit(DBI::dbClearResult(res), add = TRUE)
-    DBI::dbFetch(res, n = -1)
-  }
-)
-
-methods::setMethod(
-  "dbExecute",
-  c("MdbConnection", "character"),
-  function(conn, statement, ...) {
-    .require_valid_connection(conn)
-    stop("`dbExecute()` is not supported for MDB/ACCDB in read-only mode.", call. = FALSE)
-  }
-)
-
-methods::setMethod(
-  "dbFetch",
-  "MdbResult",
-  function(res, n = -1, ...) {
-    start <- res@position + 1L
-    total <- nrow(res@data)
-
-    if (n < 0 || is.infinite(n)) {
-      end <- total
-    } else {
-      end <- min(total, res@position + as.integer(n))
-    }
-
-    if (start > total) {
-      res@completed <- TRUE
-      return(res@data[0, , drop = FALSE])
-    }
-
-    chunk <- res@data[start:end, , drop = FALSE]
-    res@position <- as.integer(end)
-    res@completed <- end >= total
-    chunk
-  }
-)
-
-methods::setMethod(
-  "dbHasCompleted",
-  "MdbResult",
-  function(res, ...) {
-    isTRUE(res@completed)
-  }
-)
-
-methods::setMethod(
-  "dbIsValid",
-  "MdbResult",
-  function(dbObj, ...) {
-    isTRUE(!dbObj@completed || dbObj@position <= nrow(dbObj@data))
-  }
-)
-
-methods::setMethod(
-  "dbClearResult",
-  "MdbResult",
-  function(res, ...) {
-    res@completed <- TRUE
-    TRUE
-  }
-)
+  df
+}

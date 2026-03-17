@@ -1,20 +1,24 @@
 Package: mdbtoolr
 Type: Package
 Title: DBI Interface to 'mdbtools' for Microsoft Access Databases
-Version: 0.0.0.9000
+Version: 0.0.0.9900
 Authors@R: person("Bruno", "Tremblay", email = "bruno@boostao.ca", role = c("aut", "cre"))
 Author: Bruno Tremblay [aut, cre]
 Maintainer: Bruno Tremblay <bruno@boostao.ca>
-Description: Provides a DBI backend for reading Microsoft Access
-    '.mdb' and '.accdb' files via vendored native 'mdbtools'
-    library sources compiled into the package.
+Description: Provides a read-only DBI backend and high-level helper
+    functions for Microsoft Access '.mdb' and '.accdb' files. Uses
+    vendored native 'mdbtools' library sources compiled into the package,
+    so core functionality does not require external 'mdbtools' command-line
+    tools at runtime.
 License: GPL-2 | LGPL-2
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 4.1)
 Imports:
     DBI,
-    methods
+    methods,
+    utils,
+    jsonlite
 Suggests:
     testthat (>= 3.0.0)
 SystemRequirements: GNU make

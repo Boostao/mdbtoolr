@@ -1,39 +1,14 @@
 # mdbtoolr
 
-`mdbtoolr` is an R package that provides a DBI backend for reading Microsoft Access
-`.mdb` and `.accdb` files.
+`mdbtoolr` provides a read-only DBI backend for Microsoft Access `.mdb` and
+`.accdb` files, powered by vendored native `mdbtools` sources compiled into the
+package.
 
-The package vendors and compiles `mdbtools` C sources as part of installation, so it does
-not require a separate system installation of `mdbtools` for core read/query operations.
-
-## Features
-
-- DBI driver constructor: `mdb()`
-- Connect with `DBI::dbConnect()` using either:
-  - `DBI::dbConnect(mdb(), dbname = "path/to/file.accdb")`
-  - `DBI::dbConnect("path/to/file.accdb")`
-- List and inspect schema:
-  - `DBI::dbListTables()`
-  - `DBI::dbListFields()`
-  - `DBI::dbExistsTable()`
-- Read/query data:
-  - `DBI::dbReadTable()`
-  - `DBI::dbGetQuery()`
-
-## Installation
-
-From a local checkout:
+## Install
 
 ```r
-install.packages("DBI")
-install.packages(".", repos = NULL, type = "source")
-```
-
-For development installs:
-
-```r
-install.packages("devtools")
-devtools::install_local(".", force = TRUE)
+install.packages("remotes")
+remotes::install_github("boostao/mdbtoolr")
 ```
 
 ## Quick Start
@@ -42,43 +17,50 @@ devtools::install_local(".", force = TRUE)
 library(DBI)
 library(mdbtoolr)
 
-con <- dbConnect(mdb(), dbname = "path/to/database.accdb")
+# 1) Prefer your own Access file path.
+db_path <- "path/to/your/database.accdb"
+
+# 2) Optional: use bundled test fixture when available.
+fixture <- system.file("tests", "testthat", "mdbtestdata", "data", "nwind.mdb", package = "mdbtoolr")
+if (nzchar(fixture)) {
+  db_path <- fixture
+}
+
+if (!file.exists(db_path)) {
+  stop("Set `db_path` to a valid .mdb/.accdb file.")
+}
+
+con <- dbConnect(mdb(), dbname = db_path)
 on.exit(dbDisconnect(con), add = TRUE)
 
-# List tables
-tables <- dbListTables(con)
-print(head(tables))
+dbListTables(con)
+dbListFields(con, "Products")
 
-# Run a SQL query
-out <- dbGetQuery(con, "SELECT * FROM [Some Table] LIMIT 10;")
-print(out)
+products <- dbReadTable(con, "Products")
+head(products)
+
+top_products <- dbGetQuery(
+  con,
+  "SELECT [ProductID], [ProductName] FROM [Products] LIMIT 5;"
+)
+top_products
 ```
 
-You can also connect directly with a path:
+## Helper Functions
 
-```r
-con <- dbConnect("path/to/database.mdb")
-on.exit(dbDisconnect(con), add = TRUE)
-```
+`mdbtoolr` also includes mdbtools-style helpers such as:
+
+- `mdb_tables()`
+- `mdb_queries()`
+- `mdb_schema()`
+- `mdb_sql()`
+- `mdb_export()`
+- `mdb_json()`
+- `mdb_count()`
+- `mdb_prop()`
 
 ## Notes
 
-- The backend is read-only. `dbExecute()` is not supported.
-- `mdb()` is the preferred constructor name.
-- Table names with spaces or special characters should be SQL-quoted in queries,
-  for example `[My Table]`.
-
-## Development
-
-Build and check:
-
-```sh
-R CMD build .
-R CMD check mdbtoolr_0.0.0.9000.tar.gz --as-cran
-```
-
-Run tests:
-
-```sh
-Rscript -e 'testthat::test_dir("tests/testthat")'
-```
+- Runtime is read-only. `dbExecute()` is intentionally unsupported.
+- Core package features do not require the system `mdbtools` CLI binaries.
+- Quote table names that contain spaces or symbols, for example `[Order Details]`.

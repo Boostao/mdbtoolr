@@ -510,6 +510,7 @@ typedef struct {
 	unsigned char is_null;
 	unsigned char is_fixed;
 	int colnum;
+	int col_num;
 	int offset;
 } MdbField;
 

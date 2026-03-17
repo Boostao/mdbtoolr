@@ -6,6 +6,7 @@ VERSION="${1:-1.0.0}"
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 SRC_DIR="$ROOT_DIR/src"
 TARGET_DIR="$SRC_DIR/mdbtools"
+PATCH_DIR="$ROOT_DIR/scripts/vendor-patches"
 URL_RELEASE="https://github.com/mdbtools/mdbtools/releases/download/v${VERSION}/mdbtools-${VERSION}.tar.gz"
 URL_GH_ARCHIVE="https://github.com/mdbtools/mdbtools/archive/refs/tags/v${VERSION}.tar.gz"
 TESTDATA_URL="https://github.com/mdbtools/mdbtestdata/archive/refs/heads/master.tar.gz"
@@ -56,6 +57,56 @@ prune_non_build_files() {
   rm -f "$TARGET_DIR/test_script.sh"
   rm -f "$TARGET_DIR/test_sql.sh"
   rm -f "$TARGET_DIR/m4/lt~obsolete.m4"
+}
+
+apply_vendor_diff_patches() {
+  if [ ! -d "$PATCH_DIR" ]; then
+    return 0
+  fi
+
+  patch_cmd=""
+  if command -v patch >/dev/null 2>&1; then
+    patch_cmd="patch"
+  elif command -v git >/dev/null 2>&1; then
+    patch_cmd="git-apply"
+  else
+    echo "ERROR: vendor patches require either 'patch' or 'git'" >&2
+    return 1
+  fi
+
+  for patch_file in "$PATCH_DIR"/*.patch; do
+    if [ ! -e "$patch_file" ]; then
+      continue
+    fi
+
+    patch_name="$(basename "$patch_file")"
+    echo "[mdbtoolr] Applying vendor patch ${patch_name}"
+
+    if [ "$patch_cmd" = "patch" ]; then
+      if patch --dry-run -p1 -d "$TARGET_DIR" < "$patch_file" >/dev/null 2>&1; then
+        patch -p1 -d "$TARGET_DIR" < "$patch_file"
+        continue
+      fi
+
+      if patch --dry-run -R -p1 -d "$TARGET_DIR" < "$patch_file" >/dev/null 2>&1; then
+        echo "[mdbtoolr] Patch ${patch_name} already present upstream; skipping"
+        continue
+      fi
+    else
+      if git apply --check --directory="$TARGET_DIR" "$patch_file" >/dev/null 2>&1; then
+        git apply --directory="$TARGET_DIR" "$patch_file"
+        continue
+      fi
+
+      if git apply --reverse --check --directory="$TARGET_DIR" "$patch_file" >/dev/null 2>&1; then
+        echo "[mdbtoolr] Patch ${patch_name} already present upstream; skipping"
+        continue
+      fi
+    fi
+
+    echo "ERROR: failed to apply vendor patch ${patch_name}" >&2
+    return 1
+  done
 }
 
 apply_local_vendor_patches() {
@@ -212,6 +263,7 @@ fi
 
 cp -R "$src_unpacked"/. "$TARGET_DIR"/
 prune_non_build_files
+apply_vendor_diff_patches
 apply_local_vendor_patches
 
 if [ ! -x "$TARGET_DIR/configure" ]; then
